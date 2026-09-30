@@ -686,16 +686,18 @@ function splitSentences(t, wordCharStart){
 //  HIGHLIGHT — finds the exact word being spoken and draws a tight underline
 // ─────────────────────────────────────────────────────────────────────────────
 
-// highlightWord: strict forward-only, no startsWith on short words
+// highlightWord: strict forward-only, bounded by the current sentence
 function highlightWord(spokenWord){
   if(!spokenWord || !wordMap.length) return;
   const clean = spokenWord.toLowerCase().replace(/[^a-z0-9']/g,'');
-  if(clean.length < 2) return;
+  if(!clean) return;
 
-  // Only search within next WINDOW words forward — never jump back
-  const WINDOW = 80;
-  const end    = Math.min(wordSearchStart + WINDOW, wordMap.length);
-  const short  = clean.length <= 3; // exact-only for short words
+  // Never search past the end of the sentence being spoken (+ small slack)
+  const sentEnd = (lineStarts[lineIdx+1] != null)
+    ? lineStarts[lineIdx+1] + 3
+    : wordMap.length;
+  const end = Math.min(wordSearchStart + 80, sentEnd, wordMap.length);
+  const short = clean.length <= 3; // exact match only for short words
 
   for(let i = wordSearchStart; i < end; i++){
     const w = wordMap[i].word;
@@ -708,27 +710,15 @@ function highlightWord(spokenWord){
       return;
     }
   }
-  // Not found in window — skip silently (don't jump to random location)
+  // Not found — keep the cursor where it is, never jump elsewhere
 }
 
-// highlightLine: set anchor at start of a new sentence
-function highlightLine(sentence){
-  if(!sentence || !wordMap.length) return;
-  const words = sentence.trim().toLowerCase()
-    .replace(/[^a-z0-9'\s]/g,'').split(/\s+/)
-    .filter(w => w.length >= 3);
-
-  // Search forward only from current position
-  const end = Math.min(wordSearchStart + 100, wordMap.length);
-  for(const word of words){
-    for(let i = wordSearchStart; i < end; i++){
-      if(wordMap[i].word === word){
-        wordSearchStart = i;
-        drawHighlight(wordMap[i].cx, wordMap[i].cy, wordMap[i].cw, wordMap[i].ch);
-        return;
-      }
-    }
-  }
+// highlightLine: highlight the first word of a sentence by index
+function highlightLine(){
+  const i = lineStarts[lineIdx];
+  if(i == null || !wordMap[i]) return;
+  wordSearchStart = i;
+  drawHighlight(wordMap[i].cx, wordMap[i].cy, wordMap[i].cw, wordMap[i].ch);
 }
 
 function drawHighlight(cx, cy, cw, ch){
