@@ -385,6 +385,7 @@ const hCtx      = hCanvas.getContext('2d');
 
 let pdfDoc=null, curPage=1, rendering=false;
 let pageText='', textLines=[], wordMap=[];
+let lineStarts=[]; // wordMap index where each sentence begins
 let wordSearchStart=0;
 let lastHighlightY=-1;
 let voices=[];
@@ -593,24 +594,40 @@ async function renderPage(num){
     orderedRows = rows;
   }
 
-  // ── 8. Build wordMap + pageText in correct reading order ───────
+  // ── 8. Build wordMap + pageText from ONE token stream ─────────
+  // Every word pushed to wordMap also records its character offset in
+  // pageText, so sentences can be mapped to exact wordMap indices later
+  // (no fuzzy searching = no random jumps).
   wordMap  = [];
   pageText = '';
+  const wordCharStart = [];
+  let pendingHyphen = false;
 
   for(const row of orderedRows){
     for(const it of row.items){
-      const raw   = it.str;
-      const parts = raw.split(/(\s+)/);
+      const parts = it.str.split(/(\s+)/);
       let   off   = 0;
-      const total = raw.length || 1;
+      const total = it.str.length || 1;
 
       for(const chunk of parts){
         const t = chunk.trim();
         if(!t){ off += chunk.length; continue; }
-        const fx = off / total;
-        const fw = t.length / total;
+        const fx  = off / total;
+        const fw  = t.length / total;
         const wrd = t.toLowerCase().replace(/[^a-z0-9']/g,'');
+
+        if(pendingHyphen){
+          pageText = pageText.replace(/-\s*$/,''); // join "impor-" + "tant"
+        } else if(pageText && !/\s$/.test(pageText)){
+          pageText += ' ';
+        }
+        pendingHyphen = false;
+
+        const charStart = pageText.length;
+        pageText += t;
+
         if(wrd){
+          wordCharStart.push(charStart);
           wordMap.push({
             word: wrd,
             cx  : it.cx + fx * it.cw,
@@ -621,16 +638,14 @@ async function renderPage(num){
         }
         off += chunk.length;
       }
-      pageText += raw + ' ';
     }
-    pageText += ' '; // row break
+    if(/[a-zA-Z]-$/.test(pageText)) pendingHyphen = true; // hyphen at row end
   }
 
-  pageText  = pageText.replace(/\s+/g,' ').trim();
-  // Fix hyphenated line breaks: "impor- tant" → "important"
-  pageText  = pageText.replace(/(\w)- (\w)/g,'$1$2');
-
-  textLines = splitSentences(pageText);
+  // ── 9. Split into sentences and map each to its wordMap index ──
+  const built  = splitSentences(pageText, wordCharStart);
+  textLines    = built.lines;
+  lineStarts   = built.starts;
   document.getElementById('totLines').textContent = textLines.length;
 
   requestAnimationFrame(()=>{
@@ -642,16 +657,29 @@ async function renderPage(num){
   rendering = false;
 }
 
-function splitSentences(t){
-  // Split on sentence endings, keeping punctuation
-  const parts = t.match(/[^.!?]+[.!?]+/g) || [t];
-  return parts
-    .map(s => s.trim())
-    .filter(s =>
-      s.length >= 10 &&          // skip tiny fragments
-      /[a-zA-Z]{4,}/.test(s) && // must have real words
-      !/^\d+[.)\s]/.test(s)    // skip "1. " "2) " numbered list markers
-    );
+// Returns { lines:[sentence...], starts:[wordMap index...] }
+function splitSentences(t, wordCharStart){
+  const lines = [], starts = [];
+  const re = /[^.!?]+[.!?]+|[^.!?]+$/g;
+  let m;
+  while((m = re.exec(t)) !== null){
+    const chunk = m[0];
+    const lead  = chunk.length - chunk.replace(/^\s+/,'').length;
+    const s     = chunk.trim();
+    if(s.length < 10) continue;
+    if(!/[a-zA-Z]{4,}/.test(s)) continue;
+    const charPos = m.index + lead;
+    // first word at or after this character offset (wordCharStart is sorted)
+    let lo = 0, hi = wordCharStart.length;
+    while(lo < hi){
+      const mid = (lo + hi) >> 1;
+      if(wordCharStart[mid] < charPos) lo = mid + 1; else hi = mid;
+    }
+    if(lo >= wordCharStart.length) continue;
+    lines.push(s);
+    starts.push(lo);
+  }
+  return { lines, starts };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
