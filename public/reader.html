@@ -542,9 +542,9 @@ async function renderPage(num){
 
   // ── 5. Filter ──────────────────────────────────────────────────
   const filtered = items.filter(it => {
-    // Remove header / footer zone items
-    if(it.pdfY < footerMax) return false;
-    if(it.pdfY > headerMin) return false;
+    // Remove header / footer zone items (body-relative and absolute 6% bands)
+    if(it.pdfY < footerMax || it.pdfY < PH * 0.06) return false;
+    if(it.pdfY > headerMin || it.pdfY > PH * 0.94) return false;
     // Remove tiny text (footnotes, captions under images, subscripts)
     if(it.fh < bodyFH * 0.65) return false;
     // Remove noise patterns
