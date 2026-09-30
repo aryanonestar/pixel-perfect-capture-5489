@@ -443,7 +443,7 @@ async function loadPDF(file){
   document.getElementById('fileName').textContent = file.name;
   try{
     const buf = await file.arrayBuffer();
-    pdfDoc = await pdfjsLib.getDocument(new Uint8Array(buf)).promise;
+    pdfDoc = await pdfjsLib.getDocument({data:new Uint8Array(buf), cMapUrl:'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/cmaps/', cMapPacked:true, standardFontDataUrl:'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/standard_fonts/'}).promise;
     document.getElementById('totalPages').textContent = pdfDoc.numPages;
     document.getElementById('pageInput').max = pdfDoc.numPages;
     await renderPage(1);
@@ -461,6 +461,11 @@ async function loadPDF(file){
 async function renderPage(num){
   if(rendering) return;
   rendering = true;
+  try { await renderPageInner(num); }
+  catch(err){ console.error('renderPage failed', err); }
+  finally { rendering = false; }
+}
+async function renderPageInner(num){
   curPage = num;
   document.getElementById('curPageNum').textContent = num;
 
@@ -479,7 +484,7 @@ async function renderPage(num){
   hCanvas.height = vp.height;
   hCtx.clearRect(0,0,hCanvas.width,hCanvas.height);
 
-  const tc = await page.getTextContent();
+  let tc; try { tc = await page.getTextContent(); } catch(e){ console.error(e); tc = {items:[]}; }
 
   // ── 1. Enrich every item with computed fields ──────────────────
   const items = tc.items
