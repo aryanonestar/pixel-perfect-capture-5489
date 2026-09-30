@@ -389,7 +389,7 @@ let lineStarts=[]; // wordMap index where each sentence begins
 let wordSearchStart=0;
 let lastHighlightY=-1;
 let voices=[];
-let utterance=null, currentAudio=null, isReading=false, isPaused=false, lineIdx=0;
+let readGen=0; let utterance=null, currentAudio=null, isReading=false, isPaused=false, lineIdx=0;
 let customAudio=null, customName='', clonedId=null, elKey_=null, audioCache={};
 let sessStart=null, sessElapsed=0, sessInt=null, sessPaused=false, sessPage=1, pagesRead=0;
 let pomMin=25, pomSec=25*60, pomInt=null, pomRunning=false, pomBreak=false;
@@ -470,7 +470,9 @@ async function renderPageInner(num){
   document.getElementById('curPageNum').textContent = num;
 
   const page  = await pdfDoc.getPage(num);
-  const SCALE = 3.0;
+  // Sharp at 3x, but capped so very large pages never exceed browser canvas limits (which render blank)
+  const base  = page.getViewport({scale: 1.0});
+  const SCALE = Math.min(3.0, 4096 / Math.max(base.width, base.height), Math.sqrt(16000000 / (base.width * base.height)));
   const vp    = page.getViewport({scale: SCALE});
   const vp1   = page.getViewport({scale: 1.0});
   const PH    = vp1.height; // page height in PDF units
@@ -808,14 +810,15 @@ document.getElementById('stopBtn').addEventListener('click',stopReading);
 
 function startReading(){
   if(!pageText){alert('Page loading…');return}
-  if(isPaused){speechSynthesis.resume();isPaused=false;readUI(true);return}
-  isReading=true; lineIdx=0; wordSearchStart=0; lastHighlightY=-1;
+  if(isPaused){speechSynthesis.resume();if(currentAudio)currentAudio.play().catch(()=>{});isPaused=false;readUI(true);return}
+  readGen++; isReading=true; lineIdx=0; wordSearchStart=0; lastHighlightY=-1;
   document.getElementById('readingProgress').style.display='block';
   readUI(true); readNext();
 }
+function escHTML(t){return String(t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function pauseReading(){speechSynthesis.pause();if(currentAudio)currentAudio.pause();isPaused=true;readUI(false)}
 function stopReading(){
-  isReading=false;isPaused=false;speechSynthesis.cancel();
+  readGen++; isReading=false;isPaused=false;speechSynthesis.cancel();
   if(currentAudio){currentAudio.pause();currentAudio=null;}
   lineIdx=0;wordSearchStart=0;lastHighlightY=-1;
   document.getElementById('readingProgress').style.display='none';
@@ -893,7 +896,8 @@ async function readCustom(line){
   const dur=(line.split(/\s+/).length/(150*spd))*60000;
   const a=customAudio.cloneNode(); a.playbackRate=spd;
   a.play().catch(()=>{});
-  setTimeout(()=>{ lineIdx++; if(isReading) readNext() }, dur);
+  const g=readGen;
+  setTimeout(()=>{ if(g!==readGen) return; lineIdx++; if(isReading) readNext() }, dur);
 }
 
 async function readEL(text){
@@ -909,7 +913,8 @@ async function readEL(text){
   }
   await new Promise((res,rej)=>{
     const a=new Audio(audioCache[key_]);
-    a.onended=()=>{ lineIdx++; if(isReading) readNext(); res() };
+    currentAudio=a;
+    a.onended=()=>{ currentAudio=null; lineIdx++; if(isReading) readNext(); res() };
     a.onerror=rej; a.play().catch(rej);
   });
 }
@@ -1000,11 +1005,11 @@ document.getElementById('sumBtn').addEventListener('click', async()=>{
 
   btn.disabled=false;
   if(data?.content?.[0]?.text){
-    box.innerHTML=`<div class="sumcontent">${data.content[0].text.replace(/\n/g,'<br>')}</div>`;
+    box.innerHTML=`<div class="sumcontent">${escHTML(data.content[0].text).replace(/\n/g,'<br>')}</div>`;
   } else {
     const sents=(pageText.match(/[^.!?]+[.!?]+/g)||[]).slice(0,5).join(' ');
     const wc=pageText.split(/\s+/).length;
-    box.innerHTML=`<div class="sumcontent"><div style="color:var(--warning);font-size:10px;margin-bottom:7px">⚠️ AI unavailable — key excerpts:</div><div>${sents||'No text.'}</div><div style="margin-top:10px;font-size:10px;color:var(--text-secondary)">~${wc} words</div></div>`;
+    box.innerHTML=`<div class="sumcontent"><div style="color:var(--warning);font-size:10px;margin-bottom:7px">⚠️ AI unavailable — key excerpts:</div><div>${escHTML(sents||'No text.')}</div><div style="margin-top:10px;font-size:10px;color:var(--text-secondary)">~${wc} words</div></div>`;
   }
 });
 
