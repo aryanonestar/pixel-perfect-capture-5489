@@ -612,6 +612,10 @@ async function renderPage(num){
       for(const chunk of parts){
         const t = chunk.trim();
         if(!t){ off += chunk.length; continue; }
+        // word-level noise: URLs, emails, cid artifacts, [1] markers
+        if(/^https?:\/\/|^www\.|\S+@\S+\.\w+|\(cid:\d+\)|^\[\d+\]$|^doi:/i.test(t)){
+          off += chunk.length; continue;
+        }
         const fx  = off / total;
         const fw  = t.length / total;
         const wrd = t.toLowerCase().replace(/[^a-z0-9']/g,'');
