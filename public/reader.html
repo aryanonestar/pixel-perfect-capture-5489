@@ -843,47 +843,13 @@ function readNext(){
   else                                         readSystem(line);
 }
 
-// anchorWordSearch: lock reading cursor to first word of new sentence
-// STRICT forward-only — never wraps, never jumps backward
-function anchorWordSearch(sentence){
-  const words = sentence.trim().toLowerCase()
-    .replace(/[^a-z0-9'\s]/g,'')
-    .split(/\s+/)
-    .filter(w => w.length >= 3)
-    .slice(0, 5); // use first 5 meaningful words as candidates
-
-  if(!words.length){ highlightLine(sentence); return; }
-
-  // Try to match 2 consecutive words (much more reliable anchor)
-  const end = Math.min(wordSearchStart + 150, wordMap.length);
-
-  for(let i = wordSearchStart; i < end - 1; i++){
-    if(wordMap[i].word === words[0] && words[1] && wordMap[i+1].word === words[1]){
-      wordSearchStart = i;
-      drawHighlight(wordMap[i].cx, wordMap[i].cy, wordMap[i].cw, wordMap[i].ch);
-      return;
-    }
-  }
-
-  // Fallback: single word match, forward only
-  for(let i = wordSearchStart; i < end; i++){
-    if(wordMap[i].word === words[0]){
-      wordSearchStart = i;
-      drawHighlight(wordMap[i].cx, wordMap[i].cy, wordMap[i].cw, wordMap[i].ch);
-      return;
-    }
-  }
-
-  // Last resort: try other words from sentence
-  for(const w of words.slice(1)){
-    for(let i = wordSearchStart; i < end; i++){
-      if(wordMap[i].word === w){
-        wordSearchStart = i;
-        drawHighlight(wordMap[i].cx, wordMap[i].cy, wordMap[i].cw, wordMap[i].ch);
-        return;
-      }
-    }
-  }
+// anchorWordSearch: cursor is set from the exact index recorded at build
+// time — no searching, so it can never land on the wrong part of the page.
+function anchorWordSearch(){
+  const i = lineStarts[lineIdx];
+  if(i == null || !wordMap[i]) return;
+  wordSearchStart = i;
+  drawHighlight(wordMap[i].cx, wordMap[i].cy, wordMap[i].cw, wordMap[i].ch);
 }
 
 function readSystem(line){
