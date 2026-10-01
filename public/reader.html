@@ -889,7 +889,7 @@ function readSystem(line){
 }
 
 async function readCustom(line){
-  if(clonedId&&elKey_){
+  if(clonedId){
     try{ await readEL(line); return }catch(e){ console.warn('EL err',e) }
   }
   const spd=+document.getElementById('speedSlider').value;
@@ -903,10 +903,10 @@ async function readCustom(line){
 async function readEL(text){
   const key_=`${clonedId}:${text.slice(0,30)}`;
   if(!audioCache[key_]){
-    const r=await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${clonedId}`,{
+    const r=await fetch('/api/voice/tts',{
       method:'POST',
-      headers:{'Accept':'audio/mpeg','Content-Type':'application/json','xi-api-key':elKey_},
-      body:JSON.stringify({text,model_id:'eleven_monolingual_v1',voice_settings:{stability:.5,similarity_boost:.5}})
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({voiceId:clonedId,text:text.slice(0,2500)})
     });
     if(!r.ok) throw new Error(r.status);
     audioCache[key_]=URL.createObjectURL(await r.blob());
@@ -930,11 +930,23 @@ document.getElementById('voiceFileInput').addEventListener('change', async e=>{
   customName=f.name.replace(/\.[^/.]+$/,'');
   setCS('processing','🔄 Analysing voice…');
   const rdr=new FileReader();
-  rdr.onload=ev=>{
+  rdr.onload=async ev=>{
     customAudio=new Audio(ev.target.result);
-    document.getElementById('apiKeySection').style.display='block';
     addVoiceOpt(false);
-    setCS('ready','✓ Voice ready. Add ElevenLabs key for AI cloning.');
+    setCS('processing','🔄 Cloning with AI…');
+    try{
+      const fd=new FormData();
+      fd.append('file',f);
+      fd.append('name',customName);
+      const r=await fetch('/api/voice/clone',{method:'POST',body:fd});
+      const d=await r.json().catch(()=>({}));
+      if(!r.ok||!d.voiceId) throw new Error(d.error||'Cloning failed');
+      if(!customAudio) return; // removed meanwhile
+      clonedId=d.voiceId; audioCache={};
+      addVoiceOpt(true); setCS('ready','✅ AI voice cloned!');
+    }catch(e){
+      setCS('ready','✓ Voice ready (sample playback). AI cloning unavailable: '+(e.message||'error'));
+    }
   };
   rdr.readAsDataURL(f);
 });
@@ -948,20 +960,6 @@ document.getElementById('vfremove').addEventListener('click',()=>{
   document.getElementById('cstatus').classList.remove('active');
   document.getElementById('voiceSelect').querySelector('[data-custom]')?.remove();
   stopReading();
-});
-
-document.getElementById('elKey').addEventListener('blur', async function(){
-  if(!customAudio||!this.value.trim()||clonedId) return;
-  setCS('processing','🔄 Cloning with AI…');
-  try{
-    const fd=new FormData();
-    fd.append('files',document.getElementById('voiceFileInput').files[0]);
-    fd.append('name',customName);
-    const r=await fetch('https://api.elevenlabs.io/v1/voices/add',{method:'POST',headers:{'xi-api-key':this.value.trim()},body:fd});
-    if(!r.ok) throw new Error(r.status);
-    const d=await r.json(); clonedId=d.voice_id; elKey_=this.value.trim();
-    addVoiceOpt(true); setCS('ready','✅ AI voice cloned!');
-  }catch(e){ setCS('ready','❌ Cloning failed — check API key.') }
 });
 
 function addVoiceOpt(ai){
