@@ -986,30 +986,43 @@ document.getElementById('sumBtn').addEventListener('click', async()=>{
   box.innerHTML='<div class="sumloading"><div class="spinner"></div><span>Generating…</span></div>';
   btn.disabled=true;
 
-  const body_=JSON.stringify({
-    model:'claude-sonnet-4-5-20250929',max_tokens:600,
-    messages:[{role:'user',content:`Summarise page ${curPage} of this PDF in 4-5 bullet points. Be concise:\n\n${pageText.slice(0,3000)}`}]
-  });
-  const hdrs={'Content-Type':'application/json','anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'};
-
-  let data=null;
+  let text='', errMsg='';
   try{
-    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:hdrs,body:body_});
-    if(r.ok) data=await r.json(); else throw new Error(r.status);
-  }catch(_){
-    try{
-      const r2=await fetch('https://corsproxy.io/?'+encodeURIComponent('https://api.anthropic.com/v1/messages'),{method:'POST',headers:hdrs,body:body_});
-      if(r2.ok) data=await r2.json();
-    }catch(_2){}
-  }
+    const r=await fetch('/api/summarize',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({page:curPage,text:pageText.slice(0,6000)})});
+    if(!r.ok||!r.body){
+      try{ errMsg=(await r.json()).error||''; }catch(_){}
+      throw new Error(errMsg||String(r.status));
+    }
+    const reader=r.body.getReader(), dec=new TextDecoder(); let buf='';
+    while(true){
+      const {done,value}=await reader.read(); if(done) break;
+      buf+=dec.decode(value,{stream:true});
+      let i;
+      while((i=buf.indexOf('\n'))>=0){
+        const line=buf.slice(0,i).trim(); buf=buf.slice(i+1);
+        if(!line.startsWith('data:')) continue;
+        const d=line.slice(5).trim(); if(!d||d==='[DONE]') continue;
+        try{
+          const ev=JSON.parse(d);
+          if(ev.type==='response.output_text.delta'&&ev.delta){
+            text+=ev.delta;
+            box.innerHTML=`<div class="sumcontent">${escHTML(text).replace(/\n/g,'<br>')}</div>`;
+          } else if(ev.type==='error'||ev.type==='response.failed'){
+            errMsg=ev.message||ev.error?.message||ev.response?.error?.message||errMsg;
+          }
+        }catch(_){}
+      }
+    }
+  }catch(e){ if(!errMsg) errMsg=''; }
 
   btn.disabled=false;
-  if(data?.content?.[0]?.text){
-    box.innerHTML=`<div class="sumcontent">${escHTML(data.content[0].text).replace(/\n/g,'<br>')}</div>`;
+  if(text.trim()){
+    box.innerHTML=`<div class="sumcontent">${escHTML(text.trim()).replace(/\n/g,'<br>')}</div>`;
   } else {
     const sents=(pageText.match(/[^.!?]+[.!?]+/g)||[]).slice(0,5).join(' ');
     const wc=pageText.split(/\s+/).length;
-    box.innerHTML=`<div class="sumcontent"><div style="color:var(--warning);font-size:10px;margin-bottom:7px">⚠️ AI unavailable — key excerpts:</div><div>${escHTML(sents||'No text.')}</div><div style="margin-top:10px;font-size:10px;color:var(--text-secondary)">~${wc} words</div></div>`;
+    box.innerHTML=`<div class="sumcontent"><div style="color:var(--warning);font-size:10px;margin-bottom:7px">⚠️ ${escHTML(errMsg||'AI unavailable')} — key excerpts:</div><div>${escHTML(sents||'No text.')}</div><div style="margin-top:10px;font-size:10px;color:var(--text-secondary)">~${wc} words</div></div>`;
   }
 });
 
