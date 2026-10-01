@@ -11,6 +11,8 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiSummarizeRouteImport } from './routes/api/summarize'
+import { Route as ApiVoiceCloneRouteImport } from './routes/api/voice/clone'
+import { Route as ApiVoiceTtsRouteImport } from './routes/api/voice/tts'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -22,31 +24,50 @@ const ApiSummarizeRoute = ApiSummarizeRouteImport.update({
   path: '/api/summarize',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiVoiceCloneRoute = ApiVoiceCloneRouteImport.update({
+  id: '/api/voice/clone',
+  path: '/api/voice/clone',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiVoiceTtsRoute = ApiVoiceTtsRouteImport.update({
+  id: '/api/voice/tts',
+  path: '/api/voice/tts',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/api/summarize': typeof ApiSummarizeRoute
+  '/api/voice/clone': typeof ApiVoiceCloneRoute
+  '/api/voice/tts': typeof ApiVoiceTtsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/api/summarize': typeof ApiSummarizeRoute
+  '/api/voice/clone': typeof ApiVoiceCloneRoute
+  '/api/voice/tts': typeof ApiVoiceTtsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/api/summarize': typeof ApiSummarizeRoute
+  '/api/voice/clone': typeof ApiVoiceCloneRoute
+  '/api/voice/tts': typeof ApiVoiceTtsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/api/summarize'
+  fullPaths: '/' | '/api/summarize' | '/api/voice/clone' | '/api/voice/tts'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/api/summarize'
-  id: '__root__' | '/' | '/api/summarize'
+  to: '/' | '/api/summarize' | '/api/voice/clone' | '/api/voice/tts'
+  id:
+    '__root__' | '/' | '/api/summarize' | '/api/voice/clone' | '/api/voice/tts'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ApiSummarizeRoute: typeof ApiSummarizeRoute
+  ApiVoiceCloneRoute: typeof ApiVoiceCloneRoute
+  ApiVoiceTtsRoute: typeof ApiVoiceTtsRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -65,12 +86,28 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiSummarizeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/voice/clone': {
+      id: '/api/voice/clone'
+      path: '/api/voice/clone'
+      fullPath: '/api/voice/clone'
+      preLoaderRoute: typeof ApiVoiceCloneRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/voice/tts': {
+      id: '/api/voice/tts'
+      path: '/api/voice/tts'
+      fullPath: '/api/voice/tts'
+      preLoaderRoute: typeof ApiVoiceTtsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ApiSummarizeRoute: ApiSummarizeRoute,
+  ApiVoiceCloneRoute: ApiVoiceCloneRoute,
+  ApiVoiceTtsRoute: ApiVoiceTtsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
