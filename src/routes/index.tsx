@@ -3,17 +3,17 @@ import { createFileRoute } from "@tanstack/react-router";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Narrative — PDF Reader with Read-Aloud Tracking" },
+      { title: "Narrative — Cinematic PDF Reader with Spatial Intelligence" },
       {
         name: "description",
         content:
-          "Open a PDF and have it read aloud with a word-by-word highlight that follows the text line by line.",
+          "AI-powered PDF reader with pixel-perfect word tracking, voice cloning, multi-engine speech synthesis, and intelligent page summaries.",
       },
-      { property: "og:title", content: "Narrative — PDF Reader" },
+      { property: "og:title", content: "Narrative — Cinematic PDF Reader" },
       {
         property: "og:description",
         content:
-          "Read-aloud PDF reader with accurate word-by-word highlight tracking, summaries and focus timer.",
+          "Read-aloud PDF reader with cinematic 3D interface, accurate word-by-word highlight tracking, AI summaries and focus timer.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -25,7 +25,7 @@ export const Route = createFileRoute("/")({
 function Index() {
   return (
     <iframe
-      src="/reader.html"
+      src="/homepage.html"
       title="Narrative PDF Reader"
       className="h-screen w-screen border-0"
       allow="microphone; autoplay; clipboard-write"

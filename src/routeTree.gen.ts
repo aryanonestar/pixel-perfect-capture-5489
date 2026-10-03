@@ -10,6 +10,8 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiCloudAccessRouteImport } from './routes/api/cloud-access'
+import { Route as ApiCloudUploadRouteImport } from './routes/api/cloud-upload'
 import { Route as ApiSummarizeRouteImport } from './routes/api/summarize'
 import { Route as ApiVoiceCloneRouteImport } from './routes/api/voice/clone'
 import { Route as ApiVoiceTtsRouteImport } from './routes/api/voice/tts'
@@ -17,6 +19,16 @@ import { Route as ApiVoiceTtsRouteImport } from './routes/api/voice/tts'
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiCloudAccessRoute = ApiCloudAccessRouteImport.update({
+  id: '/api/cloud-access',
+  path: '/api/cloud-access',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiCloudUploadRoute = ApiCloudUploadRouteImport.update({
+  id: '/api/cloud-upload',
+  path: '/api/cloud-upload',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiSummarizeRoute = ApiSummarizeRouteImport.update({
@@ -37,12 +49,16 @@ const ApiVoiceTtsRoute = ApiVoiceTtsRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/api/cloud-access': typeof ApiCloudAccessRoute
+  '/api/cloud-upload': typeof ApiCloudUploadRoute
   '/api/summarize': typeof ApiSummarizeRoute
   '/api/voice/clone': typeof ApiVoiceCloneRoute
   '/api/voice/tts': typeof ApiVoiceTtsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/api/cloud-access': typeof ApiCloudAccessRoute
+  '/api/cloud-upload': typeof ApiCloudUploadRoute
   '/api/summarize': typeof ApiSummarizeRoute
   '/api/voice/clone': typeof ApiVoiceCloneRoute
   '/api/voice/tts': typeof ApiVoiceTtsRoute
@@ -50,21 +66,43 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/api/cloud-access': typeof ApiCloudAccessRoute
+  '/api/cloud-upload': typeof ApiCloudUploadRoute
   '/api/summarize': typeof ApiSummarizeRoute
   '/api/voice/clone': typeof ApiVoiceCloneRoute
   '/api/voice/tts': typeof ApiVoiceTtsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/api/summarize' | '/api/voice/clone' | '/api/voice/tts'
+  fullPaths:
+    | '/'
+    | '/api/cloud-access'
+    | '/api/cloud-upload'
+    | '/api/summarize'
+    | '/api/voice/clone'
+    | '/api/voice/tts'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/api/summarize' | '/api/voice/clone' | '/api/voice/tts'
+  to:
+    | '/'
+    | '/api/cloud-access'
+    | '/api/cloud-upload'
+    | '/api/summarize'
+    | '/api/voice/clone'
+    | '/api/voice/tts'
   id:
-    '__root__' | '/' | '/api/summarize' | '/api/voice/clone' | '/api/voice/tts'
+    | '__root__'
+    | '/'
+    | '/api/cloud-access'
+    | '/api/cloud-upload'
+    | '/api/summarize'
+    | '/api/voice/clone'
+    | '/api/voice/tts'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ApiCloudAccessRoute: typeof ApiCloudAccessRoute
+  ApiCloudUploadRoute: typeof ApiCloudUploadRoute
   ApiSummarizeRoute: typeof ApiSummarizeRoute
   ApiVoiceCloneRoute: typeof ApiVoiceCloneRoute
   ApiVoiceTtsRoute: typeof ApiVoiceTtsRoute
@@ -77,6 +115,20 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/cloud-access': {
+      id: '/api/cloud-access'
+      path: '/api/cloud-access'
+      fullPath: '/api/cloud-access'
+      preLoaderRoute: typeof ApiCloudAccessRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/cloud-upload': {
+      id: '/api/cloud-upload'
+      path: '/api/cloud-upload'
+      fullPath: '/api/cloud-upload'
+      preLoaderRoute: typeof ApiCloudUploadRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/summarize': {
@@ -105,6 +157,8 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ApiCloudAccessRoute: ApiCloudAccessRoute,
+  ApiCloudUploadRoute: ApiCloudUploadRoute,
   ApiSummarizeRoute: ApiSummarizeRoute,
   ApiVoiceCloneRoute: ApiVoiceCloneRoute,
   ApiVoiceTtsRoute: ApiVoiceTtsRoute,

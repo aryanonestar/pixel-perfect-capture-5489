@@ -55,38 +55,70 @@ body::after{content:'';position:fixed;inset:0;background-image:url("data:image/s
 .star{position:absolute;border-radius:50%;background:white;animation:twinkle ease-in-out infinite}
 @keyframes twinkle{0%,100%{opacity:.1;transform:scale(1)}50%{opacity:.8;transform:scale(1.5)}}
 
-.upload-center{position:relative;z-index:2;text-align:center}
-.upload-box{display:inline-block;text-align:center;padding:65px 55px;border:2px solid var(--border);border-radius:24px;background:rgba(20,24,32,.9);backdrop-filter:blur(24px);max-width:570px;width:90vw;cursor:pointer;transition:all .4s ease;position:relative;overflow:hidden}
-.upload-box:hover{border-color:var(--accent);transform:translateY(-8px);box-shadow:0 30px 80px rgba(255,107,53,.2)}
+.upload-center{position:relative;z-index:2;text-align:center;padding:15px}
+.upload-box{display:inline-block;text-align:center;padding:36px 42px;border-radius:24px;max-width:540px;width:90vw;cursor:pointer;position:relative}
 
-/* spinning border highlight on hover */
-.upload-box::after{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:conic-gradient(transparent 60%,var(--accent) 80%,transparent 100%);animation:none;opacity:0;transition:opacity .3s}
-.upload-box:hover::after{animation:border-spin 3s linear infinite;opacity:.3}
-@keyframes border-spin{to{transform:rotate(360deg)}}
+/* Dropzone Container Base */
+.pdf-dropzone {
+  position: relative;
+  z-index: 10;
+  background: rgba(18, 23, 35, 0.94) !important;
+  border: 2px dashed rgba(249, 115, 22, 0.45) !important;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6), 0 0 25px rgba(249, 115, 22, 0.12) !important;
+  transition: all 0.25s ease;
+  overflow: visible !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
 
-.book-icon{font-size:72px;display:block;margin-bottom:18px;animation:book-float 3.5s ease-in-out infinite;filter:drop-shadow(0 0 22px rgba(255,107,53,.55))}
-@keyframes book-float{0%,100%{transform:translateY(0) rotate(-4deg)}50%{transform:translateY(-18px) rotate(4deg)}}
+/* Maintain visibility during click & file picker interaction */
+.pdf-dropzone:hover,
+.pdf-dropzone:focus-within,
+.pdf-dropzone:active {
+  background: rgba(26, 33, 49, 0.98) !important;
+  border-color: #f97316 !important;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.8), 0 0 35px rgba(249, 115, 22, 0.3) !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  transform: translateY(-2px);
+}
 
-.upload-title{font-size:34px;font-weight:600;background:linear-gradient(135deg,var(--text-primary) 40%,var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:8px}
-.upload-sub{color:var(--text-secondary);font-family:'Space Mono',monospace;font-size:13px;letter-spacing:1px}
+/* Prevent child icons/text from intercepting clicks */
+.pdf-dropzone * {
+  pointer-events: none;
+}
 
-.upload-formats{display:flex;gap:10px;justify-content:center;margin-top:18px;flex-wrap:wrap}
-.upload-fmt{padding:5px 14px;border-radius:20px;font-family:'Space Mono',monospace;font-size:10px;animation:fpop .4s ease backwards}
-.upload-fmt:nth-child(1){border:1px solid var(--accent);color:var(--accent);animation-delay:.1s}
-.upload-fmt:nth-child(2){border:1px solid var(--border);color:var(--text-secondary);animation-delay:.2s}
-.upload-fmt:nth-child(3){border:1px solid var(--border);color:var(--text-secondary);animation-delay:.3s}
-@keyframes fpop{from{opacity:0;transform:scale(.7)}to{opacity:1;transform:scale(1)}}
+/* Position hidden input absolute over the entire dropzone */
+.dropzone-file-input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0 !important;
+  z-index: 20;
+  cursor: pointer;
+  pointer-events: auto !important;
+  display: block !important;
+}
 
-.upload-features{display:flex;gap:18px;margin-top:24px;justify-content:center;flex-wrap:wrap}
-.upload-feat{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--text-secondary);font-family:'Space Mono',monospace;animation:fslide .5s ease backwards}
-.upload-feat:nth-child(1){animation-delay:.3s}
-.upload-feat:nth-child(2){animation-delay:.45s}
-.upload-feat:nth-child(3){animation-delay:.6s}
-@keyframes fslide{from{opacity:0;transform:translateX(-15px)}to{opacity:1;transform:translateX(0)}}
-.fdot{width:7px;height:7px;border-radius:50%;background:var(--accent);animation:fdpulse 2s ease-in-out infinite}
-@keyframes fdpulse{0%,100%{box-shadow:0 0 0 0 var(--accent-glow)}50%{box-shadow:0 0 0 7px transparent}}
+.dropzone-icon-wrap{display:inline-flex;align-items:center;justify-content:center;width:76px;height:76px;border-radius:20px;background:rgba(249,115,22,0.12);border:1px solid rgba(249,115,22,0.3);margin-bottom:14px;box-shadow:0 0 20px rgba(249,115,22,0.25);animation:book-float 3.5s ease-in-out infinite}
+@keyframes book-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.book-icon-svg{filter:drop-shadow(0 0 8px rgba(249,115,22,0.6))}
 
-.upload-loading{margin-top:22px;display:none;align-items:center;justify-content:center;gap:10px;font-family:'Space Mono',monospace;font-size:13px;color:var(--accent)}
+.upload-title{font-size:28px;font-weight:700;color:#ffffff !important;margin-bottom:6px;letter-spacing:-0.5px;text-shadow:0 2px 10px rgba(0,0,0,0.5)}
+.upload-sub{color:#f97316 !important;font-family:'Space Mono',monospace;font-size:12px;letter-spacing:1px;font-weight:500;margin-bottom:14px}
+
+.upload-formats{display:flex;gap:8px;justify-content:center;margin-top:12px;flex-wrap:wrap}
+.upload-fmt{padding:4px 12px;border-radius:20px;font-family:'Space Mono',monospace;font-size:10px;font-weight:700}
+.upload-fmt:nth-child(1){border:1px solid #f97316;color:#f97316;background:rgba(249,115,22,0.12)}
+.upload-fmt:nth-child(2){border:1px solid rgba(255,255,255,0.2);color:#e8e6e3;background:rgba(255,255,255,0.05)}
+.upload-fmt:nth-child(3){border:1px solid rgba(255,255,255,0.2);color:#e8e6e3;background:rgba(255,255,255,0.05)}
+
+.upload-features{display:flex;gap:14px;margin-top:16px;justify-content:center;flex-wrap:wrap}
+.upload-feat{display:flex;align-items:center;gap:6px;font-size:11px;color:#a39d94;font-family:'Space Mono',monospace}
+.fdot{width:7px;height:7px;border-radius:50%;background:#f97316;box-shadow:0 0 8px rgba(249,115,22,0.6)}
+
+.upload-loading{margin-top:18px;display:none;align-items:center;justify-content:center;gap:10px;font-family:'Space Mono',monospace;font-size:13px;color:var(--accent)}
 .upload-loading.show{display:flex}
 .ldots span{display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--accent);animation:ldot .8s ease-in-out infinite}
 .ldots span:nth-child(2){animation-delay:.15s}
@@ -194,7 +226,7 @@ body::after{content:'';position:fixed;inset:0;background-image:url("data:image/s
 ::-webkit-scrollbar-track{background:var(--bg-primary)}
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:5px}
 ::-webkit-scrollbar-thumb:hover{background:var(--accent)}
-input[type="file"]{display:none}
+input[type="file"]:not(.dropzone-file-input){display:none}
 </style>
 </head>
 <body>
@@ -208,8 +240,17 @@ input[type="file"]{display:none}
   <div class="star-field" id="starField"></div>
 
   <div class="upload-center">
-    <label for="fileInput" class="upload-box" id="uploadBoxLabel">
-      <span class="book-icon">📖</span>
+    <div class="upload-box pdf-dropzone" id="uploadBoxLabel">
+      <input type="file" id="fileInput" class="dropzone-file-input" accept=".pdf,application/pdf" aria-label="Upload PDF">
+      <div class="dropzone-icon-wrap">
+        <svg class="book-icon-svg" width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+          <line x1="12" y1="18" x2="12" y2="12"></line>
+          <line x1="9" y1="15" x2="12" y2="12"></line>
+          <line x1="15" y1="15" x2="12" y2="12"></line>
+        </svg>
+      </div>
       <div class="upload-title">Drop Your PDF</div>
       <p class="upload-sub">click to browse &nbsp;·&nbsp; drag &amp; drop</p>
       <div class="upload-formats">
@@ -226,9 +267,8 @@ input[type="file"]{display:none}
         <span>Loading</span>
         <span class="ldots"><span></span><span></span><span></span></span>
       </div>
-    </label>
+    </div>
   </div>
-  <input type="file" id="fileInput" accept=".pdf">
 </div>
 
 <!-- ═══════════════ MAIN READER ═══════════════ -->
@@ -238,6 +278,7 @@ input[type="file"]{display:none}
     <div class="page-header">
       <div class="page-info">Page <span class="page-number" id="curPageNum">1</span> <span style="opacity:.4">/</span> <span id="totalPages">—</span></div>
       <div class="page-info" id="fileName" style="font-size:11px;max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></div>
+      <button id="closeDocHeaderBtn" class="btn" style="font-size:10px;padding:4px 10px;margin-left:auto;border-color:rgba(255,107,53,0.35);color:var(--accent);display:inline-flex;align-items:center;gap:4px" title="Close document and return to dropzone"><span>✕ Close PDF</span></button>
     </div>
     <div class="canvas-wrap" id="canvasWrap">
       <canvas id="pdfCanvas"></canvas>
@@ -428,14 +469,55 @@ let pomMin=25, pomSec=25*60, pomInt=null, pomRunning=false, pomBreak=false;
 // ─────────────────────────────────────────────────────────────────────────────
 //  FILE LOAD
 // ─────────────────────────────────────────────────────────────────────────────
-document.getElementById('fileInput').addEventListener('change', e => { if(e.target.files[0]) loadPDF(e.target.files[0]) });
+// Correct Event Handling Pattern: Only transition UI after file is validated as a PDF
+const handleFileChange = (event) => {
+  const file = event.target.files?.[0];
+  if (file && (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf'))) {
+    // Only transition UI and hide dropzone after file is chosen
+    loadPDF(file);
+  }
+};
+document.getElementById('fileInput').addEventListener('change', handleFileChange);
 
 document.addEventListener('dragover',  e => { e.preventDefault(); document.getElementById('uploadBoxLabel').classList.add('has-file') });
 document.addEventListener('dragleave', ()  => document.getElementById('uploadBoxLabel').classList.remove('has-file'));
 document.addEventListener('drop', e => {
-  e.preventDefault(); document.getElementById('uploadBoxLabel').classList.remove('has-file');
+  e.preventDefault();
+  document.getElementById('uploadBoxLabel').classList.remove('has-file');
   const f = e.dataTransfer.files[0];
-  if(f && f.type==='application/pdf') loadPDF(f);
+  if(f && (f.type==='application/pdf' || f.name.toLowerCase().endsWith('.pdf'))) loadPDF(f);
+});
+
+// Function to close / unload current PDF and return to initial upload dropzone
+function closePDF(){
+  try { if (typeof stopReading === 'function') stopReading(); } catch(_) {}
+  pdfDoc = null;
+  pageText = '';
+  textLines = [];
+  wordMap = [];
+  try {
+    pCtx.clearRect(0, 0, pdfCanvas.width, pdfCanvas.height);
+    hCtx.clearRect(0, 0, hCanvas.width, hCanvas.height);
+  } catch(_) {}
+  document.getElementById('mainContainer').style.display = 'none';
+  document.getElementById('uploadScreen').classList.remove('hidden');
+  document.getElementById('uploadLoading').classList.remove('show');
+  const fi = document.getElementById('fileInput');
+  if (fi) fi.value = '';
+}
+document.getElementById('closeDocHeaderBtn')?.addEventListener('click', closePDF);
+
+// Support seamless cross-frame PDF loading & closing from homepage
+window.addEventListener('message', e => {
+  if (e.data && e.data.type === 'LOAD_PDF' && e.data.file) {
+    loadPDF(e.data.file);
+  }
+  if (e.data && e.data.type === 'CLOSE_PDF') {
+    closePDF();
+  }
+  if (e.data && e.data.type === 'PAUSE_READING') {
+    try { if (typeof stopReading === 'function') stopReading(); } catch(_) {}
+  }
 });
 
 async function loadPDF(file){
@@ -868,14 +950,40 @@ function readNext(){
   else                                         readSystem(line);
 }
 
-// anchorWordSearch: cursor is set from the exact index recorded at build
-// time — no searching, so it can never land on the wrong part of the page.
-function anchorWordSearch(){
+// anchorWordSearch: 2-word tuple anchoring and forward-only search lock
+function anchorWordSearch(line){
+  const targetLine = line || textLines[lineIdx] || '';
+  const cleanWords = targetLine.toLowerCase().replace(/[^a-z0-9\s]/g, '').trim().split(/\s+/).filter(Boolean);
+  
+  if (cleanWords.length >= 2 && wordMap.length > 0) {
+    const w1 = cleanWords[0], w2 = cleanWords[1];
+    const maxIndex = Math.min(wordSearchStart + 80, wordMap.length - 1);
+    for (let i = wordSearchStart; i < maxIndex; i++) {
+      if (wordMap[i].word === w1 && wordMap[i + 1] && wordMap[i + 1].word === w2) {
+        wordSearchStart = i;
+        drawHighlight(wordMap[i].cx, wordMap[i].cy, wordMap[i].cw, wordMap[i].ch);
+        return;
+      }
+    }
+    // Fallback: search W1 alone within 40-word forward window
+    const fallbackMax = Math.min(wordSearchStart + 40, wordMap.length);
+    for (let i = wordSearchStart; i < fallbackMax; i++) {
+      if (wordMap[i].word === w1) {
+        wordSearchStart = i;
+        drawHighlight(wordMap[i].cx, wordMap[i].cy, wordMap[i].cw, wordMap[i].ch);
+        return;
+      }
+    }
+  }
+
+  // Built-in index fallback without wrapping around to 0
   const i = lineStarts[lineIdx];
-  if(i == null || !wordMap[i]) return;
-  wordSearchStart = i;
-  drawHighlight(wordMap[i].cx, wordMap[i].cy, wordMap[i].cw, wordMap[i].ch);
+  if(i != null && wordMap[i]) {
+    wordSearchStart = Math.max(wordSearchStart, i);
+    drawHighlight(wordMap[i].cx, wordMap[i].cy, wordMap[i].cw, wordMap[i].ch);
+  }
 }
+
 
 function readSystem(line){
   utterance=new SpeechSynthesisUtterance(line);
@@ -1133,171 +1241,193 @@ document.addEventListener('keydown',e=>{
     <div style="color:#4ecdc4;font-size:17px;font-weight:700;margin-bottom:3px">&#127945; Bark AI Setup</div>
     <div style="color:#a39d94;font-size:11px;margin-bottom:18px">Open <a href="https://colab.research.google.com" target="_blank" style="color:#4ecdc4">colab.research.google.com</a> &#8594; New notebook &#8594; Runtime &#8594; T4 GPU &#8594; paste &amp; run each cell below</div>
 
-    <div style="color:#e8e6e3;font-size:12px;font-weight:600;margin-bottom:5px">&#9312; Cell 1 &mdash; Install packages <span style="color:#a39d94;font-weight:400">(~3 min)</span></div>
+    <div style="color:#e8e6e3;font-size:12px;font-weight:600;margin-bottom:5px">&#9312; Cell 1 &mdash; Install packages <span style="color:#a39d94;font-weight:400">(~15 sec)</span></div>
     <div style="position:relative;margin-bottom:14px">
       <pre id="bc1" style="background:#0a0e17;border:1px solid #2a2f3e;border-radius:8px;padding:12px;font-size:10.5px;color:#4ecdc4;overflow-x:auto;white-space:pre-wrap;font-family:'Space Mono',monospace;line-height:1.55;max-height:260px;overflow-y:auto">import subprocess, sys
 
-print(&quot;Installing packages...&quot;)
-pkgs = [&quot;flask==3.0.3&quot;,&quot;flask-cors==4.0.1&quot;,&quot;pyngrok==7.2.0&quot;,
-        &quot;scipy==1.13.1&quot;,&quot;numpy==1.26.4&quot;,&quot;transformers==4.40.2&quot;,
-        &quot;accelerate==0.30.1&quot;,&quot;encodec==0.1.1&quot;]
+print("Installing fast Bark & Flask packages...")
+pkgs = ["suno-bark", "flask==3.0.3", "flask-cors==4.0.1", "scipy==1.13.1", "pyngrok==7.2.0"]
 for pkg in pkgs:
-    subprocess.run([sys.executable,&quot;-m&quot;,&quot;pip&quot;,&quot;install&quot;,&quot;-q&quot;,pkg],check=True)
-subprocess.run([sys.executable,&quot;-m&quot;,&quot;pip&quot;,&quot;install&quot;,&quot;-q&quot;,
-    &quot;git+https://github.com/suno-ai/bark.git&quot;],check=True)
+    subprocess.run([sys.executable, "-m", "pip", "install", "-q", pkg], check=True)
+
 import torch
-print(&quot;GPU:&quot;, torch.cuda.get_device_name(0) if torch.cuda.is_available() else &quot;NONE - switch to T4!&quot;)
-if not torch.cuda.is_available(): raise RuntimeError(&quot;No GPU - set Runtime &gt; T4 GPU&quot;)
-print(&quot;Done!&quot;)</pre>
+print("GPU Active:", torch.cuda.get_device_name(0) if torch.cuda.is_available() else "NONE - Switch Runtime to T4 GPU!")
+if not torch.cuda.is_available():
+    raise RuntimeError("No GPU detected! Please select T4 GPU in Colab runtime.")
+print("Cell 1 Complete!")</pre>
       <button onclick="copyCell('bc1',this)" style="position:absolute;top:7px;right:7px;background:#4ecdc4;border:none;border-radius:4px;padding:3px 9px;font-size:10px;cursor:pointer;color:#000;font-weight:700">Copy</button>
     </div>
 
-    <div style="color:#e8e6e3;font-size:12px;font-weight:600;margin-bottom:5px">&#9313; Cell 2 &mdash; Load model <span style="color:#a39d94;font-weight:400">(~2 min)</span></div>
+    <div style="color:#e8e6e3;font-size:12px;font-weight:600;margin-bottom:5px">&#9313; Cell 2 &mdash; Load model <span style="color:#a39d94;font-weight:400">(~30 sec fast weights)</span></div>
     <div style="position:relative;margin-bottom:14px">
       <pre id="bc2" style="background:#0a0e17;border:1px solid #2a2f3e;border-radius:8px;padding:12px;font-size:10.5px;color:#4ecdc4;overflow-x:auto;white-space:pre-wrap;font-family:'Space Mono',monospace;line-height:1.55;max-height:260px;overflow-y:auto">import torch, gc
 from bark import SAMPLE_RATE, generate_audio, preload_models
 
-print(&quot;Loading Bark small models...&quot;)
-preload_models(text_use_gpu=True,text_use_small=True,coarse_use_gpu=True,
-               coarse_use_small=True,fine_use_gpu=True,fine_use_small=False,
-               codec_use_gpu=True,force_reload=False)
+print("Loading Bark fast lightweight models...")
+preload_models(
+    text_use_gpu=True, text_use_small=True,
+    coarse_use_gpu=True, coarse_use_small=True,
+    fine_use_gpu=True, fine_use_small=True,
+    codec_use_gpu=True, force_reload=False
+)
 gc.collect(); torch.cuda.empty_cache()
 used  = torch.cuda.memory_allocated(0)/1e9
 total = torch.cuda.get_device_properties(0).total_memory/1e9
-print(f&quot;Bark ready! VRAM: {used:.1f}/{total:.1f}GB&quot;)
-print(&quot;Warming up...&quot;)
-_ = generate_audio(&quot;Ready.&quot;, history_prompt=&quot;v2/en_speaker_6&quot;)
+print(f"Bark ready! VRAM: {used:.1f}/{total:.1f}GB")
+print("Warming up model...")
+_ = generate_audio("Ready.", history_prompt="v2/en_speaker_6")
 gc.collect(); torch.cuda.empty_cache()
-print(&quot;Warmup done!&quot;)</pre>
+print("Warmup Done!")</pre>
       <button onclick="copyCell('bc2',this)" style="position:absolute;top:7px;right:7px;background:#4ecdc4;border:none;border-radius:4px;padding:3px 9px;font-size:10px;cursor:pointer;color:#000;font-weight:700">Copy</button>
     </div>
 
-    <div style="color:#e8e6e3;font-size:12px;font-weight:600;margin-bottom:5px">&#9314; Cell 3 &mdash; Start server <span style="color:#a39d94;font-weight:400">(shows your URL)</span></div>
+    <div style="color:#e8e6e3;font-size:12px;font-weight:600;margin-bottom:5px">&#9314; Cell 3 &mdash; Start server <span style="color:#a39d94;font-weight:400">(instant URL, no tokens required!)</span></div>
     <div style="position:relative;margin-bottom:18px">
-      <pre id="bc3" style="background:#0a0e17;border:1px solid #2a2f3e;border-radius:8px;padding:12px;font-size:10.5px;color:#4ecdc4;overflow-x:auto;white-space:pre-wrap;font-family:'Space Mono',monospace;line-height:1.55;max-height:260px;overflow-y:auto">import io,re,gc,time,threading
+      <pre id="bc3" style="background:#0a0e17;border:1px solid #2a2f3e;border-radius:8px;padding:12px;font-size:10.5px;color:#4ecdc4;overflow-x:auto;white-space:pre-wrap;font-family:'Space Mono',monospace;line-height:1.55;max-height:260px;overflow-y:auto">import io, re, gc, time, threading, subprocess
 import numpy as np
 import scipy.io.wavfile as wav
 import torch
-from flask import Flask,request,jsonify,send_file
+from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
-from pyngrok import ngrok
-from bark import SAMPLE_RATE,generate_audio
+from bark import SAMPLE_RATE, generate_audio
 
-app=Flask(__name__); CORS(app)
-MAX_CHUNK=170; GPU_LOCK=threading.Lock()
-VOICES={'narrator':'v2/en_speaker_6','professor':'v2/en_speaker_3',
-        'storyteller':'v2/en_speaker_9','energetic':'v2/en_speaker_1',
-        'female':'v2/en_speaker_0','deep':'v2/en_speaker_8',
-        'young':'v2/en_speaker_2','british':'v2/en_speaker_7'}
+app = Flask(__name__); CORS(app)
+MAX_CHUNK = 170; GPU_LOCK = threading.Lock()
+VOICES = {
+    'narrator': 'v2/en_speaker_6', 'professor': 'v2/en_speaker_3',
+    'storyteller': 'v2/en_speaker_9', 'energetic': 'v2/en_speaker_1',
+    'female': 'v2/en_speaker_0', 'deep': 'v2/en_speaker_8',
+    'young': 'v2/en_speaker_2', 'british': 'v2/en_speaker_7'
+}
 
 def vram_check():
-    used=torch.cuda.memory_allocated(0); total=torch.cuda.get_device_properties(0).total_memory
-    if used/total&gt;0.85: gc.collect(); torch.cuda.empty_cache(); time.sleep(0.3)
+    used = torch.cuda.memory_allocated(0)
+    total = torch.cuda.get_device_properties(0).total_memory
+    if used / total > 0.85:
+        gc.collect(); torch.cuda.empty_cache(); time.sleep(0.3)
 
 def detect_emotion(t):
-    t=t.lower()
-    if re.search(r&quot;\b(amazing|incredible|excellent|exciting|fantastic)\b&quot;,t): return &quot;excited&quot;
-    if re.search(r&quot;\b(important|critical|must|essential|warning|key)\b&quot;,t): return &quot;emphatic&quot;
-    if re.search(r&quot;\b(however|but|although|despite|yet|nevertheless)\b&quot;,t): return &quot;cautious&quot;
-    if t.strip().endswith(&quot;?&quot;): return &quot;questioning&quot;
-    return &quot;neutral&quot;
+    t = t.lower()
+    if re.search(r"\b(amazing|incredible|excellent|exciting|fantastic)\b", t): return "excited"
+    if re.search(r"\b(important|critical|must|essential|warning|key)\b", t): return "emphatic"
+    if re.search(r"\b(however|but|although|despite|yet|nevertheless)\b", t): return "cautious"
+    if t.strip().endswith("?"): return "questioning"
+    return "neutral"
 
-def apply_emotion(text,emotion):
-    if emotion==&quot;excited&quot; and not text.endswith(&quot;!&quot;): text=text.rstrip(&quot;.&quot;)+&quot;!&quot;
-    elif emotion==&quot;cautious&quot;: text=&quot;... &quot;+text
-    elif emotion==&quot;emphatic&quot;:
-        skip={&quot;about&quot;,&quot;which&quot;,&quot;these&quot;,&quot;those&quot;,&quot;their&quot;,&quot;there&quot;,&quot;would&quot;,&quot;could&quot;,&quot;should&quot;}
-        ws=text.split()
-        text=&quot; &quot;.join([w.upper() if len(w)&gt;5 and w.lower() not in skip and 0&lt;i&lt;len(ws)-1 and w.isalpha() else w for i,w in enumerate(ws)])
+def apply_emotion(text, emotion):
+    if emotion == "excited" and not text.endswith("!"): text = text.rstrip(".") + "!"
+    elif emotion == "cautious": text = "... " + text
+    elif emotion == "emphatic":
+        skip = {"about", "which", "these", "those", "their", "there", "would", "could", "should"}
+        ws = text.split()
+        text = " ".join([w.upper() if len(w) > 5 and w.lower() not in skip and 0 < i < len(ws) - 1 and w.isalpha() else w for i, w in enumerate(ws)])
     return text
 
 def safe_chunks(text):
-    sents=re.split(r&quot;(?&lt;=[.!?])\s+&quot;,text.strip()); out,cur=[],&quot;&quot;
+    sents = re.split(r"(?<=[.!?])\s+", text.strip()); out, cur = [], ""
     for s in sents:
-        s=s.strip()
+        s = s.strip()
         if not s: continue
-        if len(s)&gt;MAX_CHUNK:
-            for p in re.split(r&quot;(?&lt;=[,;:])\s+&quot;,s):
-                p=p.strip()
+        if len(s) > MAX_CHUNK:
+            for p in re.split(r"(?<=[,;:])\s+", s):
+                p = p.strip()
                 if not p: continue
-                if len(cur)+len(p)+1&lt;MAX_CHUNK: cur+=(&quot; &quot; if cur else &quot;&quot;)+p
+                if len(cur) + len(p) + 1 < MAX_CHUNK: cur += (" " if cur else "") + p
                 else:
                     if cur: out.append(cur)
-                    cur=p[:MAX_CHUNK]
+                    cur = p[:MAX_CHUNK]
         else:
-            if len(cur)+len(s)+1&lt;MAX_CHUNK: cur+=(&quot; &quot; if cur else &quot;&quot;)+s
+            if len(cur) + len(s) + 1 < MAX_CHUNK: cur += (" " if cur else "") + s
             else:
                 if cur: out.append(cur)
-                cur=s
+                cur = s
     if cur: out.append(cur)
     return [c for c in out if c.strip()] or [text[:MAX_CHUNK]]
 
-def safe_gen(text,preset):
+def safe_gen(text, preset):
     vram_check()
     for attempt in range(3):
         try:
-            audio=generate_audio(text,history_prompt=preset)
-            if audio is None or len(audio)==0: raise ValueError(&quot;Empty audio&quot;)
+            audio = generate_audio(text, history_prompt=preset)
+            if audio is None or len(audio) == 0: raise ValueError("Empty audio")
             return audio
         except Exception as e:
-            print(f&quot;  Attempt {attempt+1} failed: {e}&quot;)
+            print(f"  Attempt {attempt + 1} failed: {e}")
             gc.collect(); torch.cuda.empty_cache(); time.sleep(1)
-    raise RuntimeError(&quot;Failed after 3 attempts&quot;)
+    raise RuntimeError("Failed after 3 attempts")
 
-@app.route(&quot;/tts&quot;,methods=[&quot;POST&quot;])
+@app.route("/tts", methods=["POST"])
 def tts():
-    t0=time.time()
+    t0 = time.time()
     try:
-        data=request.json or {}
-        text=data.get(&quot;text&quot;,&quot;&quot;).strip()
-        voice=data.get(&quot;voice&quot;,&quot;narrator&quot;)
-        emotion=data.get(&quot;emotion&quot;) or detect_emotion(text)
-        if not text: return jsonify({&quot;error&quot;:&quot;No text&quot;}),400
-        text=re.sub(r&quot;[^\x00-\x7F]&quot;,&quot; &quot;,text)
-        text=re.sub(r&quot;\s+&quot;,&quot; &quot;,text).strip()[:900]
-        preset=VOICES.get(voice,VOICES[&quot;narrator&quot;])
-        chunks=safe_chunks(apply_emotion(text,emotion))
-        print(f&quot;TTS [{voice}|{emotion}] {len(chunks)} chunks | {text[:60]}&quot;)
+        data = request.json or {}
+        text = data.get("text", "").strip()
+        voice = data.get("voice", "narrator")
+        emotion = data.get("emotion") or detect_emotion(text)
+        if not text: return jsonify({"error": "No text"}), 400
+        text = re.sub(r"[^\x00-\x7F]", " ", text)
+        text = re.sub(r"\s+", " ", text).strip()[:900]
+        preset = VOICES.get(voice, VOICES["narrator"])
+        chunks = safe_chunks(apply_emotion(text, emotion))
+        print(f"TTS [{voice}|{emotion}] {len(chunks)} chunks | {text[:60]}")
         with GPU_LOCK:
-            silence=np.zeros(int(SAMPLE_RATE*0.12),dtype=np.float32)
-            arrays=[safe_gen(c,preset) for c in chunks]
-        final=arrays[0]
-        for a in arrays[1:]: final=np.concatenate([final,silence,a])
-        buf=io.BytesIO()
-        wav.write(buf,SAMPLE_RATE,(final*32767).astype(np.int16))
+            silence = np.zeros(int(SAMPLE_RATE * 0.12), dtype=np.float32)
+            arrays = [safe_gen(c, preset) for c in chunks]
+        final = arrays[0]
+        for a in arrays[1:]: final = np.concatenate([final, silence, a])
+        buf = io.BytesIO()
+        wav.write(buf, SAMPLE_RATE, (final * 32767).astype(np.int16))
         buf.seek(0)
-        app.req_count=getattr(app,&quot;req_count&quot;,0)+1
-        print(f&quot;  Done: {len(final)/SAMPLE_RATE:.1f}s in {time.time()-t0:.1f}s&quot;)
-        if app.req_count%8==0: gc.collect(); torch.cuda.empty_cache()
-        return send_file(buf,mimetype=&quot;audio/wav&quot;)
+        app.req_count = getattr(app, "req_count", 0) + 1
+        print(f"  Done: {len(final)/SAMPLE_RATE:.1f}s in {time.time()-t0:.1f}s")
+        if app.req_count % 8 == 0: gc.collect(); torch.cuda.empty_cache()
+        return send_file(buf, mimetype="audio/wav")
     except Exception as e:
-        print(f&quot;ERROR: {e}&quot;); gc.collect(); torch.cuda.empty_cache()
-        return jsonify({&quot;error&quot;:str(e)}),500
+        print(f"ERROR: {e}"); gc.collect(); torch.cuda.empty_cache()
+        return jsonify({"error": str(e)}), 500
 
-@app.route(&quot;/ping&quot;)
+@app.route("/ping")
 def ping():
-    d={&quot;status&quot;:&quot;ok&quot;,&quot;model&quot;:&quot;bark-small&quot;,&quot;voices&quot;:list(VOICES.keys())}
+    d = {"status": "ok", "model": "bark-small", "voices": list(VOICES.keys())}
     if torch.cuda.is_available():
-        d[&quot;vram_used&quot;]=round(torch.cuda.memory_allocated(0)/1e9,2)
-        d[&quot;vram_total&quot;]=round(torch.cuda.get_device_properties(0).total_memory/1e9,2)
+        d["vram_used"] = round(torch.cuda.memory_allocated(0) / 1e9, 2)
+        d["vram_total"] = round(torch.cuda.get_device_properties(0).total_memory / 1e9, 2)
     return jsonify(d)
 
-def keepalive():
-    import urllib.request
-    while True:
-        time.sleep(240)
-        try: urllib.request.urlopen(&quot;http://localhost:5000/ping&quot;,timeout=5)
-        except: pass
-threading.Thread(target=keepalive,daemon=True).start()
+threading.Thread(target=lambda: app.run(host="0.0.0.0", port=5000, threaded=True, use_reloader=False), daemon=True).start()
+time.sleep(1.5)
 
-print(&quot;Starting ngrok...&quot;); ngrok.kill(); time.sleep(1)
-tunnel=ngrok.connect(5000,bind_tls=True)
-url=str(tunnel.public_url)
-print(); print(&quot;=&quot;*55); print(&quot;SERVER IS LIVE!&quot;)
-print(); print(&quot;  YOUR URL: &quot;+url)
-print(); print(&quot;  Paste into PDF reader Bark section -&gt; Connect&quot;)
-print(&quot;=&quot;*55)
-app.run(host=&quot;0.0.0.0&quot;,port=5000,threaded=False,use_reloader=False)</pre>
+print("Starting Cloudflare Tunnel...")
+try:
+    subprocess.run(["wget", "-q", "-O", "cloudflared", "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64"], check=True)
+    subprocess.run(["chmod", "+x", "cloudflared"], check=True)
+    p = subprocess.Popen(["./cloudflared", "tunnel", "--url", "http://localhost:5000"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    url = ""
+    for _ in range(30):
+        time.sleep(0.5)
+        line = p.stderr.readline() if p.stderr else ""
+        if "trycloudflare.com" in line:
+            url = re.search(r"https://[a-zA-Z0-9-]+\.trycloudflare\.com", line).group(0)
+            break
+    if url:
+        print("\n" + "=" * 55)
+        print("SERVER IS LIVE!")
+        print(f"  YOUR URL: {url}")
+        print("  Paste into PDF reader Bark section -> Connect")
+        print("=" * 55)
+    else:
+        raise RuntimeError("Cloudflare tunnel timeout")
+except Exception as e:
+    print(f"Cloudflare tunnel notice ({e}), trying PyNgrok...")
+    from pyngrok import ngrok
+    ngrok.kill()
+    tunnel = ngrok.connect(5000, bind_tls=True)
+    print("\n" + "=" * 55)
+    print("SERVER IS LIVE!")
+    print(f"  YOUR URL: {tunnel.public_url}")
+    print("  Paste into PDF reader Bark section -> Connect")
+    print("=" * 55)</pre>
+
       <button onclick="copyCell('bc3',this)" style="position:absolute;top:7px;right:7px;background:#4ecdc4;border:none;border-radius:4px;padding:3px 9px;font-size:10px;cursor:pointer;color:#000;font-weight:700">Copy</button>
     </div>
 

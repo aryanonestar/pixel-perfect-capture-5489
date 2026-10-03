@@ -1,0 +1,1231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Narrative — Cinematic PDF Reader</title>
+<meta name="description" content="A cinematic, AI-powered PDF reader with word-by-word tracking, voice cloning, and spatial reading.">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700;800;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#050810;--bg2:#0a0e17;--bg3:#0f1420;
+  --text:#e8e6e3;--text2:#8a8578;--text3:#5a564e;
+  --accent:#ff6b35;--accent2:#ff9a35;--accent3:#ffbe6b;
+  --teal:#4ecdc4;--teal2:#2db5ac;
+  --glow:rgba(255,107,53,.35);--teal-glow:rgba(78,205,196,.25);
+  --card:rgba(15,20,32,.65);--border:rgba(255,255,255,.06);
+  --grad1:linear-gradient(135deg,#ff6b35,#ff9a35,#ffbe6b);
+  --grad2:linear-gradient(135deg,#4ecdc4,#2db5ac,#45b7d1);
+}
+html{scroll-behavior:auto;overflow-x:hidden}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);overflow-x:hidden;-webkit-font-smoothing:antialiased}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:rgba(255,107,53,.3);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--accent)}
+
+/* ══════════════ NAV ══════════════ */
+.nav{position:fixed;top:0;left:0;right:0;z-index:1000;padding:18px 40px;display:flex;align-items:center;justify-content:space-between;transition:all .4s ease;backdrop-filter:blur(0px)}
+.nav.scrolled{background:rgba(5,8,16,.85);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:12px 40px}
+.nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none}
+.nav-logo-icon{width:32px;height:32px;border-radius:8px;background:var(--grad1);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#050810;font-family:'Space Mono',monospace}
+.nav-logo-text{font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:600;color:var(--text);letter-spacing:-.5px}
+.nav-links{display:flex;gap:32px;align-items:center}
+.nav-link{color:var(--text2);font-size:13px;font-weight:500;text-decoration:none;transition:color .25s;letter-spacing:.3px}
+.nav-link:hover{color:var(--accent)}
+.nav-cta{padding:9px 22px;border-radius:8px;background:var(--accent);color:#050810;font-size:13px;font-weight:700;border:none;cursor:pointer;transition:all .25s;text-decoration:none;font-family:'Space Grotesk',sans-serif}
+.nav-cta:hover{background:var(--accent2);transform:translateY(-1px);box-shadow:0 8px 30px var(--glow)}
+
+/* ══════════════ HERO ══════════════ */
+.hero{position:relative;min-height:100vh;display:flex;align-items:center;justify-content:center;overflow:hidden;perspective:1200px}
+.hero-canvas{position:absolute;inset:0;z-index:0}
+.hero-gradient{position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 50% 40%,rgba(255,107,53,.06) 0%,transparent 70%),radial-gradient(ellipse 60% 50% at 70% 60%,rgba(78,205,196,.04) 0%,transparent 60%);z-index:1;pointer-events:none}
+.hero-content{position:relative;z-index:10;text-align:center;max-width:900px;padding:0 24px}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;padding:6px 16px;border-radius:100px;border:1px solid rgba(255,107,53,.2);background:rgba(255,107,53,.06);font-family:'Space Mono',monospace;font-size:11px;color:var(--accent);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:28px}
+.hero-badge-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);animation:pulse-dot 2s ease-in-out infinite}
+@keyframes pulse-dot{0%,100%{box-shadow:0 0 0 0 var(--glow)}50%{box-shadow:0 0 0 8px transparent}}
+.hero-title{font-family:'Space Grotesk',sans-serif;font-size:clamp(42px,7vw,82px);font-weight:700;line-height:1.05;letter-spacing:-2.5px;margin-bottom:22px}
+.hero-title-line{display:block;opacity:0;transform:translateY(40px)}
+.hero-title .gradient-text{background:var(--grad1);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero-sub{font-size:clamp(15px,2vw,19px);color:var(--text2);line-height:1.7;max-width:600px;margin:0 auto 40px;font-weight:400;opacity:0;transform:translateY(30px)}
+.hero-actions{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;opacity:0;transform:translateY(30px)}
+.btn-hero{padding:14px 32px;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;transition:all .3s ease;border:2px solid transparent;font-family:'Space Grotesk',sans-serif;text-decoration:none;display:inline-flex;align-items:center;gap:8px}
+.btn-hero-primary{background:var(--accent);color:#050810;border-color:var(--accent)}
+.btn-hero-primary:hover{background:var(--accent2);border-color:var(--accent2);transform:translateY(-3px);box-shadow:0 14px 40px var(--glow)}
+.btn-hero-outline{background:transparent;color:var(--text);border-color:rgba(255,255,255,.12)}
+.btn-hero-outline:hover{border-color:var(--accent);color:var(--accent);transform:translateY(-3px)}
+
+/* Dropzone Container Base */
+.pdf-dropzone {
+  position: relative;
+  z-index: 10;
+  background: rgba(255, 255, 255, 0.03);
+  border: 2px dashed rgba(255, 255, 255, 0.2);
+  transition: background 0.2s ease, border-color 0.2s ease;
+  overflow: visible;
+}
+
+/* Maintain visibility during click & file picker interaction */
+.pdf-dropzone:hover,
+.pdf-dropzone:focus-within,
+.pdf-dropzone:active {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border-color: #f97316 !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Prevent child icons/text from intercepting clicks */
+.pdf-dropzone * {
+  pointer-events: none;
+}
+
+.dropzone-file-input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0 !important;
+  z-index: 20;
+  cursor: pointer;
+  pointer-events: auto !important;
+  display: block !important;
+}
+
+.hero-dropzone {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 24px;
+  border-radius: 12px;
+  cursor: pointer;
+}
+.hero-dz-icon { font-size: 20px; }
+.hero-dz-text { font-family: 'Space Grotesk', sans-serif; font-size: 14px; font-weight: 600; color: var(--text); }
+.hero-dz-tag { font-family: 'Space Mono', monospace; font-size: 10px; padding: 2px 8px; border-radius: 4px; background: rgba(255,107,53,0.15); color: var(--accent); border: 1px solid rgba(255,107,53,0.3); }
+
+/* ══════════════ 3D FLOATING DOCUMENT ══════════════ */
+.hero-scene{position:absolute;right:5%;top:50%;transform:translateY(-50%);width:380px;height:500px;perspective:1000px;z-index:5;opacity:0}
+.doc-3d{width:100%;height:100%;position:relative;transform-style:preserve-3d;transform:rotateY(-15deg) rotateX(5deg);animation:doc-float 6s ease-in-out infinite}
+@keyframes doc-float{0%,100%{transform:rotateY(-15deg) rotateX(5deg) translateY(0)}50%{transform:rotateY(-10deg) rotateX(3deg) translateY(-20px)}}
+.doc-page{position:absolute;width:280px;height:380px;border-radius:12px;background:linear-gradient(145deg,rgba(20,24,32,.95),rgba(15,20,32,.9));border:1px solid rgba(255,255,255,.08);backdrop-filter:blur(10px);box-shadow:0 20px 60px rgba(0,0,0,.5),0 0 80px rgba(255,107,53,.05);display:flex;flex-direction:column;padding:28px 24px;transform-style:preserve-3d}
+.doc-page:nth-child(1){transform:translateZ(0px);left:50px;top:60px}
+.doc-page:nth-child(2){transform:translateZ(-20px) rotateY(3deg);left:70px;top:40px;opacity:.6}
+.doc-page:nth-child(3){transform:translateZ(-40px) rotateY(6deg);left:90px;top:20px;opacity:.3}
+.doc-line{height:8px;border-radius:4px;margin-bottom:10px;opacity:.5}
+.doc-line.title{height:14px;width:70%;background:var(--grad1);opacity:.8;margin-bottom:18px}
+.doc-line.text{background:rgba(255,255,255,.08)}
+.doc-line.text:nth-child(2){width:100%}.doc-line.text:nth-child(3){width:92%}.doc-line.text:nth-child(4){width:88%}
+.doc-line.text:nth-child(5){width:95%}.doc-line.text:nth-child(6){width:78%}.doc-line.text:nth-child(7){width:85%}
+.doc-line.text:nth-child(8){width:90%}.doc-line.text:nth-child(9){width:65%}
+.doc-highlight{position:absolute;left:24px;height:12px;border-radius:4px;background:rgba(255,107,53,.25);border-left:3px solid var(--accent);animation:highlight-scan 4s ease-in-out infinite;opacity:0}
+@keyframes highlight-scan{0%{top:70px;width:80px;opacity:0}10%{opacity:1}25%{top:70px;width:200px}35%{top:88px;width:160px}50%{top:106px;width:190px}65%{top:124px;width:140px}80%{top:142px;width:170px}90%{opacity:1}100%{top:160px;width:100px;opacity:0}}
+
+/* ══════════════ SCROLL INDICATOR ══════════════ */
+.scroll-indicator{position:absolute;bottom:40px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:8px;z-index:10;opacity:0}
+.scroll-mouse{width:24px;height:38px;border-radius:12px;border:2px solid rgba(255,255,255,.15);position:relative}
+.scroll-wheel{width:4px;height:8px;border-radius:2px;background:var(--accent);position:absolute;top:6px;left:50%;transform:translateX(-50%);animation:scroll-bounce 2s ease-in-out infinite}
+@keyframes scroll-bounce{0%,100%{transform:translateX(-50%) translateY(0);opacity:1}50%{transform:translateX(-50%) translateY(12px);opacity:.3}}
+.scroll-text{font-family:'Space Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--text3)}
+
+/* ══════════════ SECTION COMMONS ══════════════ */
+.section{position:relative;padding:140px 60px;overflow:hidden}
+.section-label{font-family:'Space Mono',monospace;font-size:10px;letter-spacing:4px;text-transform:uppercase;color:var(--accent);margin-bottom:16px;display:flex;align-items:center;gap:10px}
+.section-label::before{content:'';width:30px;height:1px;background:var(--accent)}
+.section-title{font-family:'Space Grotesk',sans-serif;font-size:clamp(32px,4.5vw,56px);font-weight:700;letter-spacing:-1.5px;line-height:1.15;margin-bottom:20px}
+.section-desc{font-size:17px;color:var(--text2);line-height:1.8;max-width:560px}
+.section-grid{display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center;max-width:1300px;margin:0 auto}
+.section-divider{width:100%;height:1px;background:linear-gradient(90deg,transparent,var(--border),transparent)}
+
+/* ══════════════ FEATURE CARDS ══════════════ */
+.feature-card{position:relative;padding:32px;border-radius:16px;background:var(--card);border:1px solid var(--border);backdrop-filter:blur(16px);transition:all .4s ease;overflow:hidden}
+.feature-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,107,53,.3),transparent);opacity:0;transition:opacity .4s}
+.feature-card:hover{border-color:rgba(255,107,53,.15);transform:translateY(-4px);box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.feature-card:hover::before{opacity:1}
+.feature-icon{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:18px}
+.feature-icon-orange{background:rgba(255,107,53,.1);border:1px solid rgba(255,107,53,.15)}
+.feature-icon-teal{background:rgba(78,205,196,.1);border:1px solid rgba(78,205,196,.15)}
+.feature-card-title{font-family:'Space Grotesk',sans-serif;font-size:19px;font-weight:600;margin-bottom:8px;letter-spacing:-.3px}
+.feature-card-desc{font-size:14px;color:var(--text2);line-height:1.7}
+.feature-tag{display:inline-block;padding:3px 10px;border-radius:4px;font-family:'Space Mono',monospace;font-size:9px;letter-spacing:1px;text-transform:uppercase;margin-top:14px}
+.tag-orange{background:rgba(255,107,53,.1);color:var(--accent);border:1px solid rgba(255,107,53,.15)}
+.tag-teal{background:rgba(78,205,196,.1);color:var(--teal);border:1px solid rgba(78,205,196,.15)}
+
+/* ══════════════ ENGINE SECTION ══════════════ */
+.engine-section{background:linear-gradient(180deg,var(--bg) 0%,var(--bg2) 100%)}
+.engine-visual{position:relative;height:420px;border-radius:16px;background:var(--card);border:1px solid var(--border);overflow:hidden}
+.engine-canvas{width:100%;height:100%;display:block}
+
+/* ══════════════ VOICE SECTION ══════════════ */
+.voice-section-bg{background:linear-gradient(180deg,var(--bg2) 0%,var(--bg) 50%,var(--bg2) 100%)}
+.voice-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:50px;max-width:1200px;margin-left:auto;margin-right:auto}
+.voice-card{position:relative;padding:36px 28px;border-radius:16px;background:var(--card);border:1px solid var(--border);text-align:center;transition:all .4s ease;overflow:hidden}
+.voice-card:hover{transform:translateY(-6px);border-color:rgba(255,107,53,.15);box-shadow:0 24px 60px rgba(0,0,0,.3)}
+.voice-card-icon{font-size:40px;margin-bottom:16px;display:block}
+.voice-card-name{font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:600;margin-bottom:6px}
+.voice-card-desc{font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:16px}
+.voice-waveform{height:40px;display:flex;align-items:center;justify-content:center;gap:3px}
+.voice-bar{width:4px;border-radius:2px;background:var(--accent);animation:wave-bar 1.2s ease-in-out infinite}
+.voice-bar:nth-child(1){height:12px;animation-delay:0s}
+.voice-bar:nth-child(2){height:24px;animation-delay:.1s}
+.voice-bar:nth-child(3){height:32px;animation-delay:.2s}
+.voice-bar:nth-child(4){height:18px;animation-delay:.3s}
+.voice-bar:nth-child(5){height:28px;animation-delay:.4s}
+.voice-bar:nth-child(6){height:14px;animation-delay:.5s}
+.voice-bar:nth-child(7){height:22px;animation-delay:.6s}
+@keyframes wave-bar{0%,100%{transform:scaleY(1)}50%{transform:scaleY(.3)}}
+.voice-card:nth-child(2) .voice-bar{background:var(--teal)}
+.voice-card:nth-child(3) .voice-bar{background:var(--accent3)}
+
+/* ══════════════ AI SUMMARY SECTION ══════════════ */
+.ai-section{background:var(--bg)}
+.ai-preview{position:relative;max-width:700px;padding:36px;border-radius:16px;background:var(--card);border:1px solid var(--border);overflow:hidden}
+.ai-preview::after{content:'';position:absolute;bottom:0;left:0;right:0;height:80px;background:linear-gradient(transparent,rgba(5,8,16,.9))}
+.ai-typing{font-family:'Space Mono',monospace;font-size:13px;line-height:2;color:var(--text2)}
+.ai-typing .bullet{color:var(--accent);font-weight:700}
+.ai-cursor{display:inline-block;width:2px;height:16px;background:var(--accent);margin-left:2px;animation:blink-cursor .7s step-end infinite;vertical-align:text-bottom}
+@keyframes blink-cursor{50%{opacity:0}}
+
+/* ══════════════ READER SECTION ══════════════ */
+.reader-section{background:linear-gradient(180deg,var(--bg2),var(--bg));padding-bottom:0}
+.reader-frame{width:100%;max-width:1400px;margin:50px auto 0;border-radius:16px 16px 0 0;border:1px solid var(--border);border-bottom:none;overflow:hidden;background:var(--bg2);box-shadow:0 -20px 80px rgba(0,0,0,.4);transition:all .35s cubic-bezier(0.16, 1, 0.3, 1)}
+.reader-frame-bar{display:flex;align-items:center;gap:8px;padding:12px 18px;background:rgba(10,14,23,.95);border-bottom:1px solid var(--border);user-select:none;position:relative;z-index:10}
+.reader-frame-dots{display:flex;align-items:center;gap:8px}
+.reader-frame-dot{width:13px;height:13px;border-radius:50%;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:900;line-height:1;color:transparent;transition:all .2s ease;border:none;outline:none;padding:0}
+.reader-frame-dot.dot-red{background:#ff5f56}
+.reader-frame-dot.dot-yellow{background:#ffbd2e}
+.reader-frame-dot.dot-green{background:#27c93f}
+
+.reader-frame-dots:hover .reader-frame-dot.dot-red{color:#4a0000}
+.reader-frame-dots:hover .reader-frame-dot.dot-yellow{color:#4a3200}
+.reader-frame-dots:hover .reader-frame-dot.dot-green{color:#003300}
+
+.reader-frame-dot:hover{transform:scale(1.22);box-shadow:0 0 10px rgba(255,255,255,.35)}
+.reader-frame-dot:active{transform:scale(0.9)}
+
+.reader-frame-url{margin-left:16px;flex:1;padding:6px 14px;border-radius:6px;background:rgba(255,255,255,.04);font-family:'Space Mono',monospace;font-size:11px;color:var(--text3);transition:all .25s ease}
+.reader-iframe{width:100%;height:92vh;min-height:740px;border:none;display:block;transition:height .35s ease}
+
+/* Maximized Mode: Green dot expands to full viewport space */
+.reader-frame.is-maximized{
+  position:fixed !important;
+  inset:0 !important;
+  z-index:999999 !important;
+  width:100vw !important;
+  height:100vh !important;
+  max-width:none !important;
+  margin:0 !important;
+  border-radius:0 !important;
+  border:none !important;
+  box-shadow:none !important;
+}
+.reader-frame.is-maximized .reader-iframe{
+  height:calc(100vh - 44px) !important;
+  min-height:calc(100vh - 44px) !important;
+}
+body.reader-maximized{overflow:hidden !important}
+
+/* ══════════════ STATS BAR ══════════════ */
+.stats-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;max-width:1000px;margin:0 auto;background:var(--border);border-radius:12px;overflow:hidden}
+.stat-item{padding:32px;text-align:center;background:var(--card)}
+.stat-number{font-family:'Space Grotesk',sans-serif;font-size:36px;font-weight:700;background:var(--grad1);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.stat-label{font-family:'Space Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--text3);margin-top:6px}
+
+/* ══════════════ FOOTER ══════════════ */
+.footer{padding:60px 60px 40px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:20px}
+.footer-brand{font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:600;color:var(--text2)}
+.footer-links{display:flex;gap:24px}
+.footer-link{font-size:12px;color:var(--text3);text-decoration:none;font-family:'Space Mono',monospace;transition:color .25s}
+.footer-link:hover{color:var(--accent)}
+
+/* ══════════════ RESPONSIVE ══════════════ */
+@media(max-width:900px){
+  .section{padding:80px 24px}
+  .section-grid{grid-template-columns:1fr;gap:40px}
+  .hero-scene{display:none}
+  .voice-cards{grid-template-columns:1fr}
+  .stats-bar{grid-template-columns:repeat(2,1fr)}
+  .nav-links{display:none}
+  .nav{padding:14px 20px}
+  .footer{flex-direction:column;text-align:center}
+}
+
+/* ══════════════ REVEAL ANIMATIONS ══════════════ */
+.reveal{opacity:0;transform:translateY(50px)}
+.reveal-left{opacity:0;transform:translateX(-60px)}
+.reveal-right{opacity:0;transform:translateX(60px)}
+.reveal-scale{opacity:0;transform:scale(.9)}
+
+/* ══════════════ CLOUD READ BUTTON ══════════════ */
+.nav-cloud-btn{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:7px 16px;border-radius:8px;
+  background:rgba(78,205,196,.1);border:1px solid rgba(78,205,196,.3);
+  color:var(--teal);font-size:12px;font-weight:600;
+  cursor:pointer;transition:all .25s;font-family:'Space Grotesk',sans-serif;
+  letter-spacing:.3px;
+}
+.nav-cloud-btn:hover{
+  background:rgba(78,205,196,.2);border-color:var(--teal);
+  box-shadow:0 0 20px rgba(78,205,196,.2);transform:translateY(-1px);
+}
+.nav-cloud-btn svg{flex-shrink:0}
+
+/* ══════════════ CLOUD READ MODAL ══════════════ */
+#cloudReadOverlay{
+  position:fixed;inset:0;z-index:9999;
+  background:rgba(5,8,16,.85);backdrop-filter:blur(18px);
+  display:none;align-items:center;justify-content:center;
+  padding:20px;
+}
+#cloudReadOverlay.cr-open{display:flex;animation:crFadeIn .25s ease}
+@keyframes crFadeIn{from{opacity:0}to{opacity:1}}
+
+.cr-modal{
+  background:linear-gradient(145deg,rgba(15,20,32,.97),rgba(10,14,23,.97));
+  border:1px solid rgba(78,205,196,.2);border-radius:20px;
+  padding:36px;width:100%;max-width:440px;
+  box-shadow:0 40px 120px rgba(0,0,0,.8),0 0 60px rgba(78,205,196,.06);
+  position:relative;
+}
+.cr-close-x{
+  position:absolute;top:16px;right:16px;
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);
+  color:var(--text2);width:32px;height:32px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;font-size:18px;transition:all .2s;
+  line-height:1;
+}
+.cr-close-x:hover{background:rgba(255,107,53,.15);color:var(--accent);border-color:var(--accent)}
+
+.cr-header{text-align:center;margin-bottom:28px}
+.cr-icon{
+  width:52px;height:52px;border-radius:14px;
+  background:linear-gradient(135deg,rgba(78,205,196,.2),rgba(45,181,172,.1));
+  border:1px solid rgba(78,205,196,.3);
+  display:flex;align-items:center;justify-content:center;
+  font-size:24px;margin:0 auto 14px;
+}
+.cr-title{font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:700;color:var(--text);margin-bottom:6px}
+.cr-sub{font-size:13px;color:var(--text2);line-height:1.5}
+
+/* Tabs */
+.cr-tabs{display:flex;gap:6px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:4px;margin-bottom:24px}
+.cr-tab{
+  flex:1;padding:8px;border-radius:7px;border:none;
+  font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:600;
+  cursor:pointer;transition:all .2s;color:var(--text2);background:transparent;
+}
+.cr-tab.active{
+  background:rgba(78,205,196,.15);color:var(--teal);
+  box-shadow:0 0 15px rgba(78,205,196,.1);
+}
+
+.cr-panel{display:none}
+.cr-panel.active{display:block}
+
+/* PIN display */
+.cr-pin-row{display:flex;gap:10px;justify-content:center;margin-bottom:20px}
+.cr-pin-input{
+  width:52px;height:56px;border-radius:10px;
+  background:rgba(255,255,255,.05);border:2px solid rgba(255,255,255,.1);
+  color:var(--text);font-family:'Space Mono',monospace;font-size:22px;
+  text-align:center;outline:none;transition:all .2s;
+}
+.cr-pin-input:focus{border-color:var(--teal);box-shadow:0 0 16px rgba(78,205,196,.2)}
+.cr-pin-input.pin-filled{border-color:rgba(78,205,196,.5);background:rgba(78,205,196,.07)}
+
+.cr-label{font-size:11px;font-family:'Space Mono',monospace;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+
+.cr-btn{
+  width:100%;padding:12px;border-radius:10px;
+  font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:700;
+  cursor:pointer;transition:all .25s;border:none;
+  margin-top:8px;
+}
+.cr-btn-primary{
+  background:linear-gradient(135deg,var(--teal),var(--teal2));
+  color:#050810;
+}
+.cr-btn-primary:hover{transform:translateY(-2px);box-shadow:0 10px 30px rgba(78,205,196,.3)}
+.cr-btn-primary:disabled{opacity:.4;cursor:not-allowed;transform:none}
+
+.cr-file-zone{
+  position:relative;
+  border:2px dashed rgba(78,205,196,.25);border-radius:12px;
+  padding:20px;text-align:center;cursor:pointer;
+  transition:all .2s;margin-bottom:16px;
+  background:rgba(78,205,196,.03);
+}
+.cr-file-zone:hover,.cr-file-zone.cr-drag{border-color:var(--teal);background:rgba(78,205,196,.08)}
+.cr-file-zone-text{font-size:13px;color:var(--text2);margin-top:8px}
+.cr-file-name{font-size:12px;color:var(--teal);font-family:'Space Mono',monospace;margin-top:6px;word-break:break-all}
+
+.cr-status{
+  padding:10px 14px;border-radius:8px;font-size:12px;
+  font-family:'Space Mono',monospace;margin-top:12px;
+  display:none;
+}
+.cr-status.show{display:block}
+.cr-status.info{background:rgba(78,205,196,.08);border:1px solid rgba(78,205,196,.2);color:var(--teal)}
+.cr-status.success{background:rgba(78,205,196,.12);border:1px solid rgba(78,205,196,.3);color:#5fefea}
+.cr-status.error{background:rgba(255,107,53,.08);border:1px solid rgba(255,107,53,.2);color:var(--accent)}
+
+.cr-code-display{
+  text-align:center;padding:16px;
+  background:rgba(78,205,196,.06);border:1px solid rgba(78,205,196,.2);
+  border-radius:12px;margin-top:12px;display:none;
+}
+.cr-code-display.show{display:block}
+.cr-code-big{
+  font-family:'Space Mono',monospace;font-size:36px;font-weight:700;
+  color:var(--teal);letter-spacing:8px;margin:8px 0;
+}
+.cr-code-hint{font-size:11px;color:var(--text3)}
+
+.cr-divider{
+  display:flex;align-items:center;gap:10px;margin:20px 0;
+  font-size:11px;color:var(--text3);font-family:'Space Mono',monospace;
+}
+.cr-divider::before,.cr-divider::after{
+  content:'';flex:1;height:1px;background:rgba(255,255,255,.06);
+}
+
+.cr-loader{
+  display:inline-block;width:14px;height:14px;
+  border:2px solid rgba(78,205,196,.2);border-top-color:var(--teal);
+  border-radius:50%;animation:cr-spin .7s linear infinite;
+  vertical-align:middle;margin-right:6px;
+}
+@keyframes cr-spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════ NAVIGATION ═══════════════ -->
+<nav class="nav" id="mainNav">
+  <a href="#" class="nav-logo">
+    <div class="nav-logo-icon">N</div>
+    <div class="nav-logo-text">Narrative</div>
+  </a>
+  <div class="nav-links">
+    <a href="#engine" class="nav-link">Engine</a>
+    <a href="#voice" class="nav-link">Voice Suite</a>
+    <button class="nav-cloud-btn" id="cloudReadBtn" title="Upload or access PDFs via cloud">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 13V20"/><polyline points="8 17 12 21 16 17"/><path d="M16 13.27A6 6 0 1 0 5.87 10a4 4 0 1 0-.87 7.9H7"/></svg>
+      Cloud Read
+    </button>
+    <a href="#ai" class="nav-link">AI Summary</a>
+    <a href="#reader" class="nav-link">Reader</a>
+    <a href="#reader" class="nav-cta">Open Reader</a>
+  </div>
+</nav>
+
+<!-- ═══════════════ HERO ═══════════════ -->
+<section class="hero" id="hero">
+  <canvas class="hero-canvas" id="heroCanvas"></canvas>
+  <div class="hero-gradient"></div>
+
+  <div class="hero-content">
+    <div class="hero-badge"><span class="hero-badge-dot"></span>PDF Reader v12 — Now Live</div>
+    <h1 class="hero-title">
+      <span class="hero-title-line">Read Documents</span>
+      <span class="hero-title-line">With <span class="gradient-text">Spatial Intelligence</span></span>
+    </h1>
+    <p class="hero-sub">AI-powered read-aloud with pixel-perfect word tracking, voice cloning, and intelligent page summaries — all inside your browser.</p>
+    <div class="hero-actions">
+      <div class="pdf-dropzone hero-dropzone" id="heroDropzone">
+        <input type="file" id="heroFileInput" class="dropzone-file-input" accept=".pdf,application/pdf" aria-label="Drop PDF or Click to Browse">
+        <span class="hero-dz-icon">📖</span>
+        <span class="hero-dz-text">Drop PDF or Browse</span>
+        <span class="hero-dz-tag">Instant Reader</span>
+      </div>
+      <a href="#reader" class="btn-hero btn-hero-outline">Live Reader ↓</a>
+    </div>
+  </div>
+
+  <!-- 3D Floating Document Scene -->
+  <div class="hero-scene" id="heroScene">
+    <div class="doc-3d" id="doc3d">
+      <div class="doc-page">
+        <div class="doc-line title"></div>
+        <div class="doc-line text"></div>
+        <div class="doc-line text"></div>
+        <div class="doc-line text"></div>
+        <div class="doc-line text"></div>
+        <div class="doc-line text"></div>
+        <div class="doc-line text"></div>
+        <div class="doc-line text"></div>
+        <div class="doc-line text"></div>
+        <div class="doc-highlight"></div>
+      </div>
+      <div class="doc-page"></div>
+      <div class="doc-page"></div>
+    </div>
+  </div>
+
+  <div class="scroll-indicator" id="scrollIndicator">
+    <div class="scroll-mouse"><div class="scroll-wheel"></div></div>
+    <span class="scroll-text">Scroll to explore</span>
+  </div>
+</section>
+
+<!-- ═══════════════ STATS BAR ═══════════════ -->
+<div class="section-divider"></div>
+<section class="section" style="padding:80px 60px">
+  <div class="stats-bar reveal-scale">
+    <div class="stat-item"><div class="stat-number" data-count="80">0</div><div class="stat-label">Word Lookahead</div></div>
+    <div class="stat-item"><div class="stat-number" data-count="100">0</div><div class="stat-label">ms Pause Latency</div></div>
+    <div class="stat-item"><div class="stat-number" data-count="8">0</div><div class="stat-label">AI Voice Presets</div></div>
+    <div class="stat-item"><div class="stat-number" data-count="2">0</div><div class="stat-label">Column Detection</div></div>
+  </div>
+</section>
+<div class="section-divider"></div>
+
+<!-- ═══════════════ SECTION 1 — CORE ENGINE ═══════════════ -->
+<section class="section engine-section" id="engine">
+  <div class="section-grid">
+    <div>
+      <div class="section-label reveal">Core Engine</div>
+      <h2 class="section-title reveal">Sequential Word<br>Tracking Engine</h2>
+      <p class="section-desc reveal">Every word on the page is mapped to exact canvas coordinates. The forward-only highlight pointer follows speech synthesis in real-time — never jumping, never wrapping.</p>
+
+      <div style="display:grid;gap:16px;margin-top:40px">
+        <div class="feature-card reveal">
+          <div class="feature-icon feature-icon-orange">🔍</div>
+          <div class="feature-card-title">Noise & Artifact Filter</div>
+          <div class="feature-card-desc">Strips headers, footers, page numbers, URLs, citation markers, and encoding artifacts before text extraction.</div>
+          <span class="feature-tag tag-orange">14 Filter Rules</span>
+        </div>
+        <div class="feature-card reveal">
+          <div class="feature-icon feature-icon-teal">📐</div>
+          <div class="feature-card-title">Two-Column Layout Detection</div>
+          <div class="feature-card-desc">Automatically detects multi-column PDFs — reads left column top-to-bottom, then right. Full-width titles correctly span both.</div>
+          <span class="feature-tag tag-teal">Y-Proximity Grouping</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="engine-visual reveal-right">
+      <canvas class="engine-canvas" id="engineCanvas"></canvas>
+    </div>
+  </div>
+</section>
+<div class="section-divider"></div>
+
+<!-- ═══════════════ SECTION 2 — VOICE SUITE ═══════════════ -->
+<section class="section voice-section-bg" id="voice">
+  <div style="text-align:center;max-width:700px;margin:0 auto">
+    <div class="section-label reveal" style="justify-content:center"><span></span>Voice Suite</div>
+    <h2 class="section-title reveal" style="text-align:center">Multi-Engine<br><span style="background:var(--grad2);-webkit-background-clip:text;-webkit-text-fill-color:transparent">Speech Synthesis</span></h2>
+    <p class="section-desc reveal" style="text-align:center;margin:0 auto">Three synthesis engines with automatic failover. From AI-cloned voices to GPU-accelerated Bark models on free Colab runtimes.</p>
+  </div>
+
+  <div class="voice-cards">
+    <div class="voice-card reveal">
+      <span class="voice-card-icon">🎤</span>
+      <div class="voice-card-name">ElevenLabs Clone</div>
+      <div class="voice-card-desc">Upload a 30-second voice sample. The AI clones it and reads your documents in your own voice.</div>
+      <div class="voice-waveform"><div class="voice-bar"></div><div class="voice-bar"></div><div class="voice-bar"></div><div class="voice-bar"></div><div class="voice-bar"></div><div class="voice-bar"></div><div class="voice-bar"></div></div>
+      <span class="feature-tag tag-orange" style="margin-top:16px">Neural Clone</span>
+    </div>
+    <div class="voice-card reveal">
+      <span class="voice-card-icon">🏔️</span>
+      <div class="voice-card-name">Bark Colab GPU</div>
+      <div class="voice-card-desc">Run Suno Bark on free T4 GPU via Colab. 8 voice presets, emotion detection, and VRAM watchdog.</div>
+      <div class="voice-waveform"><div class="voice-bar"></div><div class="voice-bar"></div><div class="voice-bar"></div><div class="voice-bar"></div><div class="voice-bar"></div><div class="voice-bar"></div><div class="voice-bar"></div></div>
+      <span class="feature-tag tag-teal" style="margin-top:16px">Free GPU</span>
+    </div>
+    <div class="voice-card reveal">
+      <span class="voice-card-icon">🌐</span>
+      <div class="voice-card-name">Web Speech API</div>
+      <div class="voice-card-desc">Zero-latency browser-native synthesis with word boundary events for real-time highlight tracking.</div>
+      <div class="voice-waveform"><div class="voice-bar"></div><div class="voice-bar"></div><div class="voice-bar"></div><div class="voice-bar"></div><div class="voice-bar"></div><div class="voice-bar"></div><div class="voice-bar"></div></div>
+      <span class="feature-tag tag-orange" style="margin-top:16px">Zero Setup</span>
+    </div>
+  </div>
+</section>
+<div class="section-divider"></div>
+
+<!-- ═══════════════ SECTION 3 — AI SUMMARIES ═══════════════ -->
+<section class="section ai-section" id="ai">
+  <div class="section-grid">
+    <div>
+      <div class="section-label reveal">AI Intelligence</div>
+      <h2 class="section-title reveal">Streaming AI<br><span class="gradient-text">Page Summaries</span></h2>
+      <p class="section-desc reveal">One click generates a concise bullet-point summary of any page. Streamed in real-time with full XSS sandboxing — all text inserted via <code style="background:rgba(255,107,53,.1);padding:2px 6px;border-radius:3px;font-size:13px;color:var(--accent)">textContent</code> or sanitized DOM.</p>
+      <div style="margin-top:30px" class="reveal">
+        <div class="feature-card">
+          <div class="feature-icon feature-icon-orange">🛡️</div>
+          <div class="feature-card-title">Security Sandboxed</div>
+          <div class="feature-card-desc">No unsanitized DOM injections. Every AI output and PDF text item passes through strict sanitization to block XSS payloads.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="ai-preview reveal-right" id="aiPreview">
+      <div style="font-family:'Space Mono',monospace;font-size:10px;color:var(--accent);letter-spacing:2px;margin-bottom:16px;text-transform:uppercase">✨ AI Summary — Page 1</div>
+      <div class="ai-typing" id="aiTyping"></div>
+    </div>
+  </div>
+</section>
+<div class="section-divider"></div>
+
+<!-- ═══════════════ SECTION 4 — LIVE READER ═══════════════ -->
+<section class="section reader-section" id="reader">
+  <div style="text-align:center;max-width:700px;margin:0 auto">
+    <div class="section-label reveal" style="justify-content:center"><span></span>Live Reader</div>
+    <h2 class="section-title reveal" style="text-align:center">Start Reading<br><span class="gradient-text">Right Now</span></h2>
+    <p class="section-desc reveal" style="text-align:center;margin:0 auto">The complete PDF Reader is embedded below. Upload a document, hit play, and watch the word-by-word highlight follow along.</p>
+  </div>
+  <div class="reader-frame reveal-scale">
+    <div class="reader-frame-bar">
+      <div class="reader-frame-dots">
+        <button class="reader-frame-dot dot-red" id="dotClose" title="Go to Main Homepage" aria-label="Go to Main Homepage">✕</button>
+        <button class="reader-frame-dot dot-yellow" id="dotRestore" title="Windowed Mode (Current framed window)" aria-label="Windowed Mode">−</button>
+        <button class="reader-frame-dot dot-green" id="dotMaximize" title="Maximize Space (PDF & interface use full viewport)" aria-label="Maximize Space">⤢</button>
+      </div>
+      <div class="reader-frame-url" id="readerFrameUrl">narrative://pdf-reader-v12-final</div>
+    </div>
+    <iframe src="/reader.html" class="reader-iframe" title="Narrative PDF Reader" allow="microphone; autoplay; clipboard-write" id="readerIframe"></iframe>
+  </div>
+</section>
+
+<!-- ═══════════════ FOOTER ═══════════════ -->
+<footer class="footer">
+  <div class="footer-brand">Narrative — Smart PDF Reader</div>
+  <div class="footer-links">
+    <a href="#hero" class="footer-link">Home</a>
+    <a href="#engine" class="footer-link">Engine</a>
+    <a href="#voice" class="footer-link">Voice Suite</a>
+    <a href="#reader" class="footer-link">Reader</a>
+  </div>
+</footer>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════════════
+//  HERO PARTICLE CANVAS
+// ═══════════════════════════════════════════════════════════════════════════════
+(function(){
+  const c = document.getElementById('heroCanvas');
+  const ctx = c.getContext('2d');
+  let W, H, particles = [], mouse = {x:-1000,y:-1000};
+
+  function resize(){
+    W = c.width = window.innerWidth;
+    H = c.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+  document.addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; });
+
+  class Particle {
+    constructor(){this.reset();}
+    reset(){
+      this.x = Math.random()*W;
+      this.y = Math.random()*H;
+      this.vx = (Math.random()-.5)*.3;
+      this.vy = (Math.random()-.5)*.3;
+      this.r = Math.random()*1.5+.5;
+      this.alpha = Math.random()*.4+.1;
+      const hues = [[255,107,53],[78,205,196],[255,190,107]];
+      const h = hues[Math.floor(Math.random()*hues.length)];
+      this.color = h;
+    }
+    update(){
+      this.x += this.vx;
+      this.y += this.vy;
+      if(this.x < 0 || this.x > W) this.vx *= -1;
+      if(this.y < 0 || this.y > H) this.vy *= -1;
+
+      const dx = mouse.x - this.x, dy = mouse.y - this.y;
+      const d = Math.sqrt(dx*dx + dy*dy);
+      if(d < 200){
+        const force = (200 - d) / 200 * .008;
+        this.vx += dx * force;
+        this.vy += dy * force;
+      }
+      this.vx *= .99; this.vy *= .99;
+    }
+    draw(){
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.r, 0, Math.PI*2);
+      ctx.fillStyle = `rgba(${this.color[0]},${this.color[1]},${this.color[2]},${this.alpha})`;
+      ctx.fill();
+    }
+  }
+
+  for(let i=0;i<120;i++) particles.push(new Particle());
+
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    // connection lines
+    for(let i=0;i<particles.length;i++){
+      for(let j=i+1;j<particles.length;j++){
+        const dx = particles[i].x - particles[j].x;
+        const dy = particles[i].y - particles[j].y;
+        const d = Math.sqrt(dx*dx + dy*dy);
+        if(d < 120){
+          ctx.beginPath();
+          ctx.moveTo(particles[i].x, particles[i].y);
+          ctx.lineTo(particles[j].x, particles[j].y);
+          ctx.strokeStyle = `rgba(255,107,53,${(1-d/120)*.08})`;
+          ctx.lineWidth = .5;
+          ctx.stroke();
+        }
+      }
+    }
+    particles.forEach(p => { p.update(); p.draw(); });
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  ENGINE VISUALIZATION CANVAS
+// ═══════════════════════════════════════════════════════════════════════════════
+(function(){
+  const c = document.getElementById('engineCanvas');
+  const ctx = c.getContext('2d');
+  let W, H, progress = 0, animating = false;
+
+  function resize(){
+    const rect = c.parentElement.getBoundingClientRect();
+    W = c.width = rect.width * 2;
+    H = c.height = rect.height * 2;
+    c.style.width = rect.width + 'px';
+    c.style.height = rect.height + 'px';
+    ctx.scale(2,2);
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  const lines = [];
+  for(let i=0;i<18;i++){
+    const isLeft = i < 9;
+    lines.push({
+      x: isLeft ? 30 : (W/4)+20,
+      y: 30 + (i % 9) * 38,
+      w: 100 + Math.random()*120,
+      col: isLeft ? 0 : 1,
+      sorted: false,
+      highlighted: false,
+      noise: Math.random() < .2,
+      alpha: 0
+    });
+  }
+
+  function draw(){
+    const w = W/2, h = H/2;
+    ctx.clearRect(0,0,w,h);
+
+    // Background grid
+    ctx.strokeStyle = 'rgba(255,255,255,.02)';
+    ctx.lineWidth = 1;
+    for(let x=0;x<w;x+=30){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,h);ctx.stroke();}
+    for(let y=0;y<h;y+=30){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke();}
+
+    // Draw column divider
+    const mid = w/2;
+    ctx.setLineDash([4,4]);
+    ctx.strokeStyle = 'rgba(78,205,196,.15)';
+    ctx.beginPath();ctx.moveTo(mid,20);ctx.lineTo(mid,h-20);ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Labels
+    ctx.font = '9px "Space Mono"';
+    ctx.fillStyle = 'rgba(78,205,196,.4)';
+    ctx.fillText('LEFT COLUMN', 30, 20);
+    ctx.fillText('RIGHT COLUMN', mid+20, 20);
+
+    // Draw word blocks
+    lines.forEach((ln, i) => {
+      const targetAlpha = ln.noise ? .15 : .7;
+      ln.alpha += (targetAlpha - ln.alpha) * .05;
+
+      if(ln.noise){
+        ctx.fillStyle = `rgba(255,80,80,${ln.alpha * .4})`;
+        ctx.strokeStyle = 'rgba(255,80,80,.2)';
+      } else if(ln.highlighted){
+        ctx.fillStyle = `rgba(255,107,53,${ln.alpha})`;
+        ctx.strokeStyle = 'rgba(255,107,53,.5)';
+      } else {
+        ctx.fillStyle = `rgba(255,255,255,${ln.alpha * .15})`;
+        ctx.strokeStyle = 'rgba(255,255,255,.05)';
+      }
+
+      const r = 3;
+      const bx = ln.x, by = ln.y, bw = ln.w, bh = 12;
+      ctx.beginPath();
+      ctx.roundRect(bx, by, bw, bh, r);
+      ctx.fill();
+      ctx.stroke();
+
+      if(ln.noise){
+        // Strikethrough
+        ctx.beginPath();
+        ctx.moveTo(bx-3, by+bh/2);
+        ctx.lineTo(bx+bw+3, by+bh/2);
+        ctx.strokeStyle = 'rgba(255,80,80,.35)';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        ctx.lineWidth = 1;
+      }
+    });
+
+    // Scanning highlight line
+    const scanY = 30 + ((Date.now()/50) % (9*38));
+    ctx.fillStyle = 'rgba(255,107,53,.06)';
+    ctx.fillRect(0, scanY-2, w, 16);
+    ctx.fillStyle = 'rgba(255,107,53,.8)';
+    ctx.fillRect(0, scanY-2, 3, 16);
+
+    // Update highlight state
+    lines.forEach((ln, i) => {
+      ln.highlighted = Math.abs(ln.y - scanY) < 20 && !ln.noise;
+    });
+
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  GSAP SCROLL ANIMATIONS
+// ═══════════════════════════════════════════════════════════════════════════════
+gsap.registerPlugin(ScrollTrigger);
+
+// Nav scroll effect
+ScrollTrigger.create({
+  start: 'top -80',
+  onEnter: () => document.getElementById('mainNav').classList.add('scrolled'),
+  onLeaveBack: () => document.getElementById('mainNav').classList.remove('scrolled'),
+});
+
+// Hero entrance
+const heroTl = gsap.timeline({delay:.3});
+heroTl.to('.hero-badge', {opacity:1, y:0, duration:.6, ease:'power3.out'})
+  .to('.hero-title-line', {opacity:1, y:0, duration:.7, stagger:.12, ease:'power3.out'}, '-=.3')
+  .to('.hero-sub', {opacity:1, y:0, duration:.6, ease:'power3.out'}, '-=.3')
+  .to('.hero-actions', {opacity:1, y:0, duration:.6, ease:'power3.out'}, '-=.3')
+  .to('#heroScene', {opacity:1, duration:1, ease:'power2.out'}, '-=.5')
+  .to('#scrollIndicator', {opacity:1, duration:.8, ease:'power2.out'}, '-=.4');
+
+// Hero parallax
+gsap.to('#heroScene', {
+  y: -100, rotateY: -25,
+  scrollTrigger: {trigger:'.hero', start:'top top', end:'bottom top', scrub:1}
+});
+gsap.to('.hero-content', {
+  y: -60, opacity: .3,
+  scrollTrigger: {trigger:'.hero', start:'top top', end:'bottom top', scrub:1}
+});
+
+// Reveal animations
+gsap.utils.toArray('.reveal').forEach(el => {
+  gsap.to(el, {opacity:1, y:0, duration:.8, ease:'power3.out',
+    scrollTrigger:{trigger:el, start:'top 85%', toggleActions:'play none none none'}
+  });
+});
+gsap.utils.toArray('.reveal-left').forEach(el => {
+  gsap.to(el, {opacity:1, x:0, duration:.9, ease:'power3.out',
+    scrollTrigger:{trigger:el, start:'top 85%', toggleActions:'play none none none'}
+  });
+});
+gsap.utils.toArray('.reveal-right').forEach(el => {
+  gsap.to(el, {opacity:1, x:0, duration:.9, ease:'power3.out',
+    scrollTrigger:{trigger:el, start:'top 85%', toggleActions:'play none none none'}
+  });
+});
+gsap.utils.toArray('.reveal-scale').forEach(el => {
+  gsap.to(el, {opacity:1, scale:1, duration:.8, ease:'power3.out',
+    scrollTrigger:{trigger:el, start:'top 85%', toggleActions:'play none none none'}
+  });
+});
+
+// Voice cards stagger
+gsap.utils.toArray('.voice-card').forEach((card, i) => {
+  gsap.to(card, {opacity:1, y:0, duration:.7, delay:i*.12, ease:'power3.out',
+    scrollTrigger:{trigger:card, start:'top 88%', toggleActions:'play none none none'}
+  });
+});
+
+// Counter animation
+gsap.utils.toArray('.stat-number').forEach(el => {
+  const target = +el.dataset.count;
+  ScrollTrigger.create({
+    trigger: el, start:'top 90%',
+    onEnter: () => {
+      gsap.to({v:0}, {v:target, duration:1.5, ease:'power2.out', onUpdate: function(){
+        el.textContent = Math.round(this.targets()[0].v);
+      }});
+    }
+  });
+});
+
+// AI Typing effect
+const summaryLines = [
+  "• The document introduces a novel approach to neural PDF text extraction using spatial coordinate mapping.",
+  "\n• Key finding: Two-column layouts require Y-proximity row grouping with a 0.6× fontSize snap threshold.",
+  "\n• The highlight engine uses a strict forward-only search with an 80-word lookahead window to prevent jumps.",
+  "\n• Voice synthesis supports three engines: ElevenLabs cloning, Bark GPU inference, and browser-native Web Speech API.",
+  "\n• Security: All extracted text is sanitized via textContent insertion to prevent XSS from malicious PDF metadata."
+];
+
+let typingTriggered = false;
+ScrollTrigger.create({
+  trigger: '#aiPreview', start: 'top 75%',
+  onEnter: () => {
+    if(typingTriggered) return;
+    typingTriggered = true;
+    const el = document.getElementById('aiTyping');
+    let full = '', lineI = 0, charI = 0;
+    function typeNext(){
+      if(lineI >= summaryLines.length){ el.innerHTML = full + '<span class="ai-cursor"></span>'; return; }
+      const line = summaryLines[lineI];
+      if(charI < line.length){
+        const ch = line[charI];
+        if(ch === '•') full += '<span class="bullet">•</span>';
+        else if(ch === '\n') full += '<br>';
+        else full += ch;
+        charI++;
+        el.innerHTML = full + '<span class="ai-cursor"></span>';
+        setTimeout(typeNext, 15 + Math.random()*20);
+      } else {
+        lineI++; charI = 0;
+        setTimeout(typeNext, 300);
+      }
+    }
+    typeNext();
+  }
+});
+
+// Reader frame entrance - keep 100% full opacity so dropzone stays bright and legible
+gsap.from('.reader-frame', {
+  y: 40,
+  duration: 0.8,
+  ease: 'power2.out',
+  scrollTrigger: {trigger:'.reader-frame', start:'top 90%', toggleActions:'play none none none'}
+});
+
+// Hero Dropzone Event Handling: Only transition after valid PDF chosen
+const handleHeroFileChange = (event) => {
+  const file = event.target.files?.[0];
+  if (file && (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf'))) {
+    const readerSec = document.getElementById('reader');
+    if (readerSec) readerSec.scrollIntoView({ behavior: 'smooth' });
+    const iframe = document.getElementById('readerIframe');
+    if (iframe && iframe.contentWindow) {
+      iframe.contentWindow.postMessage({ type: 'LOAD_PDF', file }, '*');
+    }
+  }
+};
+document.getElementById('heroFileInput')?.addEventListener('change', handleHeroFileChange);
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  WINDOW CONTROLS (Red = Close/Unload, Yellow = Windowed, Green = Maximize Space)
+// ═══════════════════════════════════════════════════════════════════════════════
+(function() {
+  const frame = document.querySelector('.reader-frame');
+  const iframe = document.getElementById('readerIframe');
+  const urlLabel = document.getElementById('readerFrameUrl');
+  const dotClose = document.getElementById('dotClose');
+  const dotRestore = document.getElementById('dotRestore');
+  const dotMaximize = document.getElementById('dotMaximize');
+
+  function setMaximized(max) {
+    if (max) {
+      frame.classList.add('is-maximized');
+      document.body.classList.add('reader-maximized');
+      if (urlLabel) urlLabel.textContent = 'narrative://pdf-reader-v12-final [MAXIMIZED SPACE]';
+    } else {
+      frame.classList.remove('is-maximized');
+      document.body.classList.remove('reader-maximized');
+      if (urlLabel) urlLabel.textContent = 'narrative://pdf-reader-v12-final [WINDOWED MODE]';
+    }
+  }
+
+  // GREEN DOT: Maximize — PDF and main interface usage maximum space
+  dotMaximize?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const isMax = frame.classList.contains('is-maximized');
+    setMaximized(!isMax);
+  });
+
+  // YELLOW DOT: The window it is currently into (Windowed mode)
+  dotRestore?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    setMaximized(false);
+    frame.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  });
+
+  // RED DOT: Go to Main Homepage
+  dotClose?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    setMaximized(false);
+    try {
+      if (iframe && iframe.contentWindow) {
+        iframe.contentWindow.postMessage({ type: 'PAUSE_READING' }, '*');
+      }
+    } catch(_) {}
+    if (urlLabel) urlLabel.textContent = 'narrative://pdf-reader-v12-final';
+    // Navigate smoothly to the main homepage
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    document.getElementById('hero')?.scrollIntoView({ behavior: 'smooth' });
+  });
+
+  // ESC key restores windowed mode
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && frame.classList.contains('is-maximized')) {
+      setMaximized(false);
+    }
+  });
+})();
+</script>
+<!-- ═══════════════ CLOUD READ MODAL ═══════════════ -->
+<div id="cloudReadOverlay" role="dialog" aria-modal="true" aria-label="Cloud Read">
+  <div class="cr-modal" id="crModal">
+    <button class="cr-close-x" id="crCloseX" aria-label="Close">✕</button>
+
+    <div class="cr-header">
+      <div class="cr-icon">☁️</div>
+      <div class="cr-title">Cloud Read</div>
+      <div class="cr-sub">Upload a PDF with a 4-digit PIN or access one with its code. Files auto-delete after 7 days.</div>
+    </div>
+
+    <div class="cr-tabs">
+      <button class="cr-tab active" id="crTabUpload">⬆️ Upload PDF</button>
+      <button class="cr-tab" id="crTabAccess">🔑 Access PDF</button>
+    </div>
+
+    <!-- UPLOAD PANEL -->
+    <div class="cr-panel active" id="crPanelUpload">
+      <div class="cr-label">Set Your 4-Digit PIN</div>
+      <div class="cr-pin-row" id="crUploadPinRow">
+        <input class="cr-pin-input" id="crUP0" maxlength="1" inputmode="numeric" type="password" autocomplete="off">
+        <input class="cr-pin-input" id="crUP1" maxlength="1" inputmode="numeric" type="password" autocomplete="off">
+        <input class="cr-pin-input" id="crUP2" maxlength="1" inputmode="numeric" type="password" autocomplete="off">
+        <input class="cr-pin-input" id="crUP3" maxlength="1" inputmode="numeric" type="password" autocomplete="off">
+      </div>
+
+      <div class="cr-label" style="margin-top:4px">Select PDF File</div>
+      <div class="cr-file-zone" id="crFileZone">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgba(78,205,196,.6)" stroke-width="1.5" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        <div class="cr-file-zone-text">Click to select or drag & drop a PDF</div>
+        <div class="cr-file-name" id="crFileName"></div>
+        <input type="file" id="crFileInput" accept=".pdf,application/pdf" style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%" tabindex="-1">
+      </div>
+
+      <button class="cr-btn cr-btn-primary" id="crUploadBtn" disabled>Upload to Cloud</button>
+      <div class="cr-status" id="crUploadStatus"></div>
+      <div class="cr-code-display" id="crCodeDisplay">
+        <div class="cr-code-hint">Your access code — share with others:</div>
+        <div class="cr-code-big" id="crCodeBig"></div>
+        <div class="cr-code-hint">⏳ Expires in 7 days</div>
+      </div>
+    </div>
+
+    <!-- ACCESS PANEL -->
+    <div class="cr-panel" id="crPanelAccess">
+      <div class="cr-label">Enter Access Code</div>
+      <div class="cr-pin-row" id="crAccessCodeRow">
+        <input class="cr-pin-input" id="crAC0" maxlength="1" inputmode="numeric" type="text" autocomplete="off" style="font-size:26px">
+        <input class="cr-pin-input" id="crAC1" maxlength="1" inputmode="numeric" type="text" autocomplete="off" style="font-size:26px">
+        <input class="cr-pin-input" id="crAC2" maxlength="1" inputmode="numeric" type="text" autocomplete="off" style="font-size:26px">
+        <input class="cr-pin-input" id="crAC3" maxlength="1" inputmode="numeric" type="text" autocomplete="off" style="font-size:26px">
+      </div>
+
+      <div class="cr-divider">then</div>
+
+      <div class="cr-label">Enter Your PIN</div>
+      <div class="cr-pin-row" id="crAccessPinRow">
+        <input class="cr-pin-input" id="crAP0" maxlength="1" inputmode="numeric" type="password" autocomplete="off">
+        <input class="cr-pin-input" id="crAP1" maxlength="1" inputmode="numeric" type="password" autocomplete="off">
+        <input class="cr-pin-input" id="crAP2" maxlength="1" inputmode="numeric" type="password" autocomplete="off">
+        <input class="cr-pin-input" id="crAP3" maxlength="1" inputmode="numeric" type="password" autocomplete="off">
+      </div>
+
+      <button class="cr-btn cr-btn-primary" id="crAccessBtn">Open PDF</button>
+      <div class="cr-status" id="crAccessStatus"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════
+//  CLOUD READ ENGINE — Vercel Blob backend · 7-day TTL · PIN guard
+// ═══════════════════════════════════════════════════════════════════
+(function(){
+  'use strict';
+
+  function setStatus(el, type, msg){
+    el.className = 'cr-status show ' + type;
+    el.innerHTML = msg;
+  }
+
+  function wirePinRow(ids){
+    ids.forEach((id, i) => {
+      const inp = document.getElementById(id);
+      if (!inp) return;
+      inp.addEventListener('input', () => {
+        inp.value = inp.value.replace(/\D/g,'').slice(-1);
+        inp.classList.toggle('pin-filled', inp.value !== '');
+        if (inp.value && i < ids.length - 1) document.getElementById(ids[i+1]).focus();
+      });
+      inp.addEventListener('keydown', e => {
+        if (e.key === 'Backspace' && !inp.value && i > 0) document.getElementById(ids[i-1]).focus();
+      });
+      inp.addEventListener('paste', e => {
+        e.preventDefault();
+        const paste = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g,'').slice(0,4);
+        paste.split('').forEach((ch, j) => {
+          const t = document.getElementById(ids[j]);
+          if (t) { t.value = ch; t.classList.add('pin-filled'); }
+        });
+        const last = document.getElementById(ids[Math.min(paste.length, ids.length)-1]);
+        if (last) last.focus();
+      });
+    });
+  }
+
+  function getPinValue(ids){ return ids.map(id => (document.getElementById(id)?.value || '')).join(''); }
+  function clearPinRow(ids){ ids.forEach(id => { const el = document.getElementById(id); if (el){ el.value=''; el.classList.remove('pin-filled'); } }); }
+
+  // ── MODAL ────────────────────────────────────────────────
+  const overlay    = document.getElementById('cloudReadOverlay');
+  const crCloseX   = document.getElementById('crCloseX');
+  const cloudBtn   = document.getElementById('cloudReadBtn');
+  const tabUpload  = document.getElementById('crTabUpload');
+  const tabAccess  = document.getElementById('crTabAccess');
+  const panelUpload= document.getElementById('crPanelUpload');
+  const panelAccess= document.getElementById('crPanelAccess');
+
+  function openModal(){ overlay.classList.add('cr-open'); document.body.style.overflow='hidden'; }
+  function closeModal(){
+    overlay.classList.remove('cr-open'); document.body.style.overflow='';
+    clearPinRow(['crUP0','crUP1','crUP2','crUP3']);
+    clearPinRow(['crAC0','crAC1','crAC2','crAC3']);
+    clearPinRow(['crAP0','crAP1','crAP2','crAP3']);
+    document.getElementById('crFileName').textContent='';
+    document.getElementById('crUploadBtn').disabled=true;
+    document.getElementById('crFileInput').value='';
+    selectedFile=null;
+    document.getElementById('crUploadStatus').className='cr-status';
+    document.getElementById('crAccessStatus').className='cr-status';
+    document.getElementById('crCodeDisplay').className='cr-code-display';
+  }
+  function switchTab(t){
+    if(t==='upload'){ tabUpload.classList.add('active'); tabAccess.classList.remove('active'); panelUpload.classList.add('active'); panelAccess.classList.remove('active'); }
+    else            { tabAccess.classList.add('active'); tabUpload.classList.remove('active'); panelAccess.classList.add('active'); panelUpload.classList.remove('active'); }
+  }
+
+  cloudBtn?.addEventListener('click', openModal);
+  crCloseX?.addEventListener('click', closeModal);
+  overlay?.addEventListener('click', e => { if(e.target===overlay) closeModal(); });
+  tabUpload?.addEventListener('click', () => switchTab('upload'));
+  tabAccess?.addEventListener('click', () => switchTab('access'));
+  document.addEventListener('keydown', e => { if(e.key==='Escape') closeModal(); });
+
+  wirePinRow(['crUP0','crUP1','crUP2','crUP3']);
+  wirePinRow(['crAC0','crAC1','crAC2','crAC3']);
+  wirePinRow(['crAP0','crAP1','crAP2','crAP3']);
+
+  // ── UPLOAD — POST multipart to /api/cloud-upload ─────────
+  let selectedFile=null;
+  const fileZone    =document.getElementById('crFileZone');
+  const fileInput   =document.getElementById('crFileInput');
+  const fileNameEl  =document.getElementById('crFileName');
+  const uploadBtn   =document.getElementById('crUploadBtn');
+  const uploadStatus=document.getElementById('crUploadStatus');
+  const codeDisplay =document.getElementById('crCodeDisplay');
+  const codeBig     =document.getElementById('crCodeBig');
+
+  function updateUploadBtn(){
+    const pin=getPinValue(['crUP0','crUP1','crUP2','crUP3']);
+    uploadBtn.disabled=!(pin.length===4 && selectedFile);
+  }
+  fileInput?.addEventListener('change', e => {
+    const f=e.target.files[0];
+    if(f && f.type==='application/pdf'){ selectedFile=f; fileNameEl.textContent='📄 '+f.name; updateUploadBtn(); }
+  });
+  ['crUP0','crUP1','crUP2','crUP3'].forEach(id => document.getElementById(id)?.addEventListener('input', updateUploadBtn));
+  fileZone?.addEventListener('dragover', e => { e.preventDefault(); fileZone.classList.add('cr-drag'); });
+  fileZone?.addEventListener('dragleave', () => fileZone.classList.remove('cr-drag'));
+  fileZone?.addEventListener('drop', e => {
+    e.preventDefault(); fileZone.classList.remove('cr-drag');
+    const f=e.dataTransfer.files[0];
+    if(f && f.type==='application/pdf'){ selectedFile=f; fileNameEl.textContent='📄 '+f.name; updateUploadBtn(); }
+    else setStatus(uploadStatus,'error','⚠️ Please drop a PDF file only.');
+  });
+
+  uploadBtn?.addEventListener('click', async () => {
+    const pin=getPinValue(['crUP0','crUP1','crUP2','crUP3']);
+    if(pin.length!==4){ setStatus(uploadStatus,'error','⚠️ Enter a 4-digit PIN first.'); return; }
+    if(!selectedFile) { setStatus(uploadStatus,'error','⚠️ Select a PDF file first.'); return; }
+
+    uploadBtn.disabled=true;
+    uploadBtn.innerHTML='<span class="cr-loader"></span>Uploading…';
+    setStatus(uploadStatus,'info','☁️ Uploading to Vercel cloud storage…');
+
+    try {
+      const form=new FormData();
+      form.append('pin', pin);
+      form.append('pdf', selectedFile, selectedFile.name);
+      const res=await fetch('/api/cloud-upload',{method:'POST',body:form});
+      const json=await res.json();
+      if(!res.ok) throw new Error(json.error||'Upload failed.');
+      setStatus(uploadStatus,'success','✅ Uploaded! Share the code — accessible from any device worldwide.');
+      codeBig.textContent=json.code;
+      codeDisplay.className='cr-code-display show';
+      uploadBtn.textContent='Upload to Cloud';
+    } catch(err){
+      setStatus(uploadStatus,'error','❌ '+err.message);
+      uploadBtn.disabled=false;
+      uploadBtn.textContent='Upload to Cloud';
+    }
+  });
+
+  // ── ACCESS — POST JSON to /api/cloud-access ───────────────
+  const accessBtn   =document.getElementById('crAccessBtn');
+  const accessStatus=document.getElementById('crAccessStatus');
+
+  accessBtn?.addEventListener('click', async () => {
+    const code=getPinValue(['crAC0','crAC1','crAC2','crAC3']);
+    const pin =getPinValue(['crAP0','crAP1','crAP2','crAP3']);
+    if(code.length!==4){ setStatus(accessStatus,'error','⚠️ Enter the 4-digit access code.'); return; }
+    if(pin.length !==4){ setStatus(accessStatus,'error','⚠️ Enter your 4-digit PIN.'); return; }
+
+    accessBtn.disabled=true;
+    accessBtn.innerHTML='<span class="cr-loader"></span>Retrieving…';
+    setStatus(accessStatus,'info','🔍 Verifying on cloud…');
+
+    try {
+      const res=await fetch('/api/cloud-access',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code,pin})});
+      const json=await res.json();
+      if(!res.ok) throw new Error(json.error||'Access denied.');
+
+      setStatus(accessStatus,'info','📖 Opening PDF from cloud…');
+      const iframe=document.getElementById('readerIframe');
+      if(iframe && iframe.contentWindow){
+        iframe.contentWindow.postMessage({type:'LOAD_PDF', url:json.pdfUrl, name:json.name},'*');
+      }
+      setStatus(accessStatus,'success','✅ PDF loaded — scroll down to read!');
+      accessBtn.textContent='Open PDF'; accessBtn.disabled=false;
+      setTimeout(()=>{ closeModal(); document.getElementById('reader')?.scrollIntoView({behavior:'smooth'}); },900);
+    } catch(err){
+      setStatus(accessStatus,'error','❌ '+err.message);
+      accessBtn.disabled=false; accessBtn.textContent='Open PDF';
+    }
+  });
+
+})();
+</script>
+
+
+</body>
+</html>
