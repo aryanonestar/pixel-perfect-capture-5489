@@ -587,16 +587,28 @@ async function renderPageInner(num){
     if(it.pdfX + it.pdfW/2 < MID) leftCount++;
     else rightCount++;
   }));
+  // A row "spans" if any item crosses the centre gutter (titles, single-column text)
+  const spans = r => r.items.some(it => it.pdfX < MID - 4 && it.pdfX + it.pdfW > MID + 4);
+  const spanRows = rows.filter(spans).length;
   const isMultiCol = leftCount > 5 && rightCount > 5
-    && Math.min(leftCount,rightCount)/Math.max(leftCount,rightCount) > 0.35;
+    && Math.min(leftCount,rightCount)/Math.max(leftCount,rightCount) > 0.35
+    && spanRows / Math.max(1, rows.length) < 0.3;
 
   let orderedRows;
   if(isMultiCol){
-    const leftRows  = rows.map(r => ({...r, items: r.items.filter(it => it.pdfX+it.pdfW/2 < MID)}))
-                          .filter(r => r.items.length);
-    const rightRows = rows.map(r => ({...r, items: r.items.filter(it => it.pdfX+it.pdfW/2 >= MID)}))
-                          .filter(r => r.items.length);
-    orderedRows = [...leftRows, ...rightRows];
+    // Walk top→bottom; full-width rows (titles, figures) split the page into
+    // blocks. Within each block read the left column fully, then the right.
+    orderedRows = [];
+    let L = [], R = [];
+    const flush = () => { orderedRows.push(...L, ...R); L = []; R = []; };
+    rows.forEach(r => {
+      if(spans(r)){ flush(); orderedRows.push(r); return; }
+      const l = r.items.filter(it => it.pdfX+it.pdfW/2 < MID);
+      const rt = r.items.filter(it => it.pdfX+it.pdfW/2 >= MID);
+      if(l.length)  L.push({...r, items: l});
+      if(rt.length) R.push({...r, items: rt});
+    });
+    flush();
   } else {
     orderedRows = rows;
   }
