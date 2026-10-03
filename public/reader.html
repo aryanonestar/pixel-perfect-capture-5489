@@ -888,20 +888,21 @@ function readSystem(line){
   speechSynthesis.speak(utterance);
 }
 
+const STOCK_VOICE='JBFqnCBsd6RMkjVDRZzb';
+let stockFailed=false;
 async function readCustom(line){
+  // 1) cloned voice → 2) natural stock AI voice → 3) browser voice. Always reads real text.
   if(clonedId){
-    try{ await readEL(line); return }catch(e){ console.warn('EL err',e) }
+    try{ await readEL(line, clonedId); return }catch(e){ console.warn('EL clone err',e) }
   }
-  const spd=+document.getElementById('speedSlider').value;
-  const dur=(line.split(/\s+/).length/(150*spd))*60000;
-  const a=customAudio.cloneNode(); a.playbackRate=spd;
-  a.play().catch(()=>{});
-  const g=readGen;
-  setTimeout(()=>{ if(g!==readGen) return; lineIdx++; if(isReading) readNext() }, dur);
+  if(!stockFailed){
+    try{ await readEL(line, STOCK_VOICE); return }catch(e){ console.warn('EL stock err',e); stockFailed=true }
+  }
+  readSystem(line);
 }
 
-async function readEL(text){
-  const key_=`${clonedId}:${text.slice(0,30)}`;
+async function readEL(text, vid=clonedId){
+  const key_=`${vid}:${text.slice(0,30)}`;
   if(!audioCache[key_]){
     const r=await fetch('/api/voice/tts',{
       method:'POST',
