@@ -509,8 +509,12 @@ document.getElementById('closeDocHeaderBtn')?.addEventListener('click', closePDF
 
 // Support seamless cross-frame PDF loading & closing from homepage
 window.addEventListener('message', e => {
-  if (e.data && e.data.type === 'LOAD_PDF' && e.data.file) {
-    loadPDF(e.data.file);
+  if (e.data && e.data.type === 'LOAD_PDF') {
+    if (e.data.file) {
+      loadPDF(e.data.file);
+    } else if (e.data.url) {
+      loadPDFFromUrl(e.data.url, e.data.name);
+    }
   }
   if (e.data && e.data.type === 'CLOSE_PDF') {
     closePDF();
@@ -532,7 +536,24 @@ async function loadPDF(file){
     document.getElementById('uploadScreen').classList.add('hidden');
     document.getElementById('mainContainer').style.display = 'grid';
     startTimer();
-  }catch(e){ alert('Error: '+e.message); document.getElementById('uploadLoading').classList.remove('show') }
+  }catch(e){ alert('Error: '+e.message); document.getElementById('uploadLoading').classList.remove('show'); }
+}
+
+async function loadPDFFromUrl(url, name){
+  document.getElementById('uploadLoading').classList.add('show');
+  if (name) document.getElementById('fileName').textContent = name;
+  try{
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('Could not fetch cloud PDF (status ' + res.status + ')');
+    const buf = await res.arrayBuffer();
+    pdfDoc = await pdfjsLib.getDocument({data:new Uint8Array(buf), cMapUrl:'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/cmaps/', cMapPacked:true, standardFontDataUrl:'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/standard_fonts/'}).promise;
+    document.getElementById('totalPages').textContent = pdfDoc.numPages;
+    document.getElementById('pageInput').max = pdfDoc.numPages;
+    await renderPage(1);
+    document.getElementById('uploadScreen').classList.add('hidden');
+    document.getElementById('mainContainer').style.display = 'grid';
+    startTimer();
+  }catch(e){ alert('Error: '+e.message); document.getElementById('uploadLoading').classList.remove('show'); }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

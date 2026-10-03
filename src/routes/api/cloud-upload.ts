@@ -12,11 +12,21 @@ function genCode(): string {
   return String(Math.floor(1000 + Math.random() * 9000));
 }
 
+function getBlobToken(): string | undefined {
+  if (process.env["BLOB_READ_WRITE_TOKEN"]) return process.env["BLOB_READ_WRITE_TOKEN"];
+  for (const [key, val] of Object.entries(process.env)) {
+    if (val && (key.endsWith("_READ_WRITE_TOKEN") || val.startsWith("vercel_blob_rw_"))) {
+      return val;
+    }
+  }
+  return undefined;
+}
+
 export const Route = createFileRoute("/api/cloud-upload")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const token = process.env["BLOB_READ_WRITE_TOKEN"];
+        const token = getBlobToken();
         if (!token) {
           return Response.json(
             { error: "Cloud storage is not configured on this server." },
@@ -75,9 +85,16 @@ export const Route = createFileRoute("/api/cloud-upload")({
           });
 
           return Response.json({ code, expires: expires.getTime() });
-        } catch (err) {
+        } catch (err: unknown) {
           console.error("[cloud-upload] Vercel Blob error:", err);
-          return Response.json({ error: "Failed to upload to cloud storage." }, { status: 502 });
+          const errMessage = err instanceof Error ? err.message : String(err);
+          let userError = "Failed to upload to cloud storage.";
+          if (errMessage.includes("private store")) {
+            userError = "Vercel Blob store is configured as Private. Please create a Public Blob store in Vercel and update BLOB_READ_WRITE_TOKEN.";
+          } else if (errMessage) {
+            userError = errMessage;
+          }
+          return Response.json({ error: userError }, { status: 502 });
         }
       },
     },

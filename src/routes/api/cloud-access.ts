@@ -13,11 +13,21 @@ const Body = z.object({
   pin: z.string().regex(/^\d{4}$/),
 });
 
+function getBlobToken(): string | undefined {
+  if (process.env["BLOB_READ_WRITE_TOKEN"]) return process.env["BLOB_READ_WRITE_TOKEN"];
+  for (const [key, val] of Object.entries(process.env)) {
+    if (val && (key.endsWith("_READ_WRITE_TOKEN") || val.startsWith("vercel_blob_rw_"))) {
+      return val;
+    }
+  }
+  return undefined;
+}
+
 export const Route = createFileRoute("/api/cloud-access")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const token = process.env["BLOB_READ_WRITE_TOKEN"];
+        const token = getBlobToken();
         if (!token) {
           return Response.json(
             { error: "Cloud storage is not configured on this server." },
